@@ -1,0 +1,127 @@
+# ===========================
+# Python
+# ===========================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+eggs/
+*.whl
+
+# ===========================
+# Virtual Environments
+# ===========================
+venv/
+.venv/
+env/
+.env/
+ENV/
+
+# ===========================
+# Environment Variables / Secrets
+# ===========================
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets.yaml
+secrets.json
+
+# ===========================
+# Model Weights & Large Files
+# (these are too big for Git — use Git LFS or download scripts)
+# ===========================
+*.bin
+*.safetensors
+*.gguf
+*.pt
+*.pth
+*.onnx
+*.h5
+*.pkl
+*.pickle
+models/
+weights/
+checkpoints/
+
+# ===========================
+# Data Files (raw filings, embeddings, indexes)
+# (download via scripts, don't commit large data)
+# ===========================
+*.parquet
+*.feather
+*.arrow
+*.csv
+!evaluation/dataset/*.csv
+*.tsv
+*.xlsx
+*.xls
+data/raw/
+data/processed/
+*.faiss
+*.index
+embeddings/
+
+# ===========================
+# IDE & Editor Files
+# ===========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ===========================
+# OS Files
+# ===========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+ehthumbs.db
+
+# ===========================
+# Jupyter Notebooks (checkpoints)
+# ===========================
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# ===========================
+# Experiment Tracking
+# ===========================
+mlruns/
+mlflow.db
+wandb/
+outputs/
+runs/
+
+# ===========================
+# Docker
+# ===========================
+*.log
+docker-compose.override.yml
+
+# ===========================
+# Testing & Coverage
+# ===========================
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# ===========================
+# Distribution / Build
+# ===========================
+*.tar.gz
+*.zip
+
+
+TODO/
