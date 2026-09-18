@@ -1,7 +1,12 @@
-# ─── Markdown ─────────────────────────────────────────────────────────────────
+# ─── Markdown & Notes ──────────────────────────────────────────────────────────
 # Ignore all markdown files except README
 *.md
 !README.md
+understanding/
+understandings/
+Understanding/
+Understandings/
+
 
 # ─── Python ───────────────────────────────────────────────────────────────────
 .venv/
