@@ -18,8 +18,12 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from dotenv import load_dotenv
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
+
+# Load environment variables (.env)
+load_dotenv()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -59,7 +63,7 @@ class QdrantIndexManager:
 
         if cloud_url and cloud_key:
             logger.info(f"Connecting to Qdrant Cloud at: {cloud_url}")
-            self.client = QdrantClient(url=cloud_url, api_key=cloud_key)
+            self.client = QdrantClient(url=cloud_url, api_key=cloud_key, timeout=60)
             self.mode = "cloud"
         else:
             # Priority 2: Local embedded on disk (ideal for development & teammate handoff)
@@ -350,7 +354,7 @@ if __name__ == "__main__":
         manager=manager,
         chunks_file=CHUNKS_FILE,
         embeddings_file=EMBEDDINGS_FILE,
-        batch_size=256,
+        batch_size=64,
     )
 
     # 3. Initialize embedding engine for real-time query encoding
