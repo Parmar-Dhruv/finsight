@@ -1,7 +1,8 @@
-# ─── Markdown & Notes ──────────────────────────────────────────────────────────
-# Ignore all markdown files except README
+# Ignore all markdown files except README and docs
 *.md
 !README.md
+!docs/*.md
+
 understanding/
 understandings/
 Understanding/
