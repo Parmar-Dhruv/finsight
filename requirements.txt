@@ -18,7 +18,8 @@ pandas                 # Tabular data handling for parsed filing chunks
 
 # ─── Embeddings & Vector Index (embed.py, index.py) ───────────────────────────
 sentence-transformers  # Embedding models: bge-large-en, cross-encoder for reranking
-faiss-cpu              # FAISS vector index — local, no server needed
+qdrant-client          # Qdrant Vector Database — local embedded & cloud support
+faiss-cpu              # Optional local FAISS vector index comparison
 
 # ─── Sparse / Hybrid Retrieval (search.py) ────────────────────────────────────
 rank-bm25              # BM25 keyword search — exact numeric/ticker matching
