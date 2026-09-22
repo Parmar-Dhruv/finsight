@@ -18,10 +18,20 @@ git pull origin nilay
 pip install -r requirements.txt
 ```
 
+Set up your environment variables:
+```bash
+# Copy example environment configuration
+cp .env.example .env          # Linux/macOS
+Copy-Item .env.example .env   # Windows PowerShell
+```
+> [!NOTE]
+> Ping Nilay for the shared cloud `QDRANT_API_KEY` and `QDRANT_URL`, and paste them into your local `.env`.
+
 Verify everything is working on your machine:
 ```bash
 python retrieval/search.py
 ```
+
 
 ---
 

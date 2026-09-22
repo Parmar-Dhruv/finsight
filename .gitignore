@@ -23,6 +23,8 @@ build/
 # ─── Environment / Secrets ────────────────────────────────────────────────────
 .env
 .env.*
+!.env.example
+
 
 # ─── Data & Model Weights (large files — don't commit) ────────────────────────
 data/raw/*
