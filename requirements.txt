@@ -1,0 +1,28 @@
+# ─── Nilay — Retrieval & Data Layer ───────────────────────────────────────────
+# These are the ONLY dependencies for Nilay's scope.
+# Dhruv (generation) and Jay (api/deployment) manage their own requirements.
+
+# ─── Core ─────────────────────────────────────────────────────────────────────
+python-dotenv          # Load .env file (e.g., EDGAR user-agent config)
+
+# ─── Data Acquisition (fetch.py) ──────────────────────────────────────────────
+requests               # HTTP calls to SEC EDGAR API
+beautifulsoup4         # Parse HTML filings from EDGAR
+
+# ─── Document Parsing (parse.py) ──────────────────────────────────────────────
+pdfplumber             # PDF text + table extraction (preserves table structure)
+
+# ─── Numeric / Data handling ──────────────────────────────────────────────────
+numpy                  # Array operations (used in embedding math)
+pandas                 # Tabular data handling for parsed filing chunks
+
+# ─── Embeddings & Vector Index (embed.py, index.py) ───────────────────────────
+sentence-transformers  # Embedding models: bge-large-en, cross-encoder for reranking
+qdrant-client          # Qdrant Vector Database — local embedded & cloud support
+faiss-cpu              # Optional local FAISS vector index comparison
+
+# ─── Sparse / Hybrid Retrieval (search.py) ────────────────────────────────────
+rank-bm25              # BM25 keyword search — exact numeric/ticker matching
+
+# ─── Retrieval Evaluation (eval/) ─────────────────────────────────────────────
+ragas                  # Retrieval + RAG evaluation metrics

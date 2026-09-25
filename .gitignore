@@ -1,0 +1,44 @@
+# Ignore all markdown files except README and docs
+*.md
+!README.md
+!docs/*.md
+
+understanding/
+understandings/
+Understanding/
+Understandings/
+
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.Python
+
+# ─── Environment / Secrets ────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+
+# ─── Data & Model Weights (large files — don't commit) ────────────────────────
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+*.gguf
+*.bin
+*.pt
+*.safetensors
+experiments/
+
+# ─── IDE / OS ─────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
