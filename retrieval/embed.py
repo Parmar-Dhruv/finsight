@@ -21,12 +21,103 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(me
 logger = logging.getLogger(__name__)
 
 
+
+class FastBertEmbedder:
+    """
+    Lightweight, pure NumPy BERT forward pass for BGE-small-en-v1.5.
+    Loads cached safetensors weights directly with zero PyTorch / DLL dependencies.
+    """
+    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5"):
+        import math
+        from pathlib import Path
+        from tokenizers import Tokenizer
+        from safetensors import safe_open
+
+        hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
+        model_slug = "models--" + model_name.replace("/", "--")
+        model_dir = hf_cache / model_slug
+        snapshot_dir = next((model_dir / "snapshots").iterdir())
+        safetensors_path = snapshot_dir / "model.safetensors"
+        tokenizer_path = snapshot_dir / "tokenizer.json"
+
+        self.w = {}
+        with safe_open(str(safetensors_path), framework="numpy") as f:
+            for k in f.keys():
+                self.w[k] = f.get_tensor(k)
+
+        self.tokenizer = Tokenizer.from_file(str(tokenizer_path))
+        self.tokenizer.enable_padding(pad_id=0, pad_token="[PAD]")
+        self.tokenizer.enable_truncation(max_length=512)
+        self.scale = 1.0 / math.sqrt(32)
+
+    def _layer_norm(self, x: np.ndarray, weight: np.ndarray, bias: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+        mean = x.mean(axis=-1, keepdims=True)
+        var = x.var(axis=-1, keepdims=True)
+        return weight * (x - mean) / np.sqrt(var + eps) + bias
+
+    def _gelu(self, x: np.ndarray) -> np.ndarray:
+        import math
+        return 0.5 * x * (1.0 + np.tanh(math.sqrt(2.0 / math.pi) * (x + 0.044715 * x**3)))
+
+    def _softmax(self, x: np.ndarray) -> np.ndarray:
+        e = np.exp(x - x.max(axis=-1, keepdims=True))
+        return e / e.sum(axis=-1, keepdims=True)
+
+    def encode(self, texts: List[str], batch_size: int = 32, show_progress_bar: bool = False) -> np.ndarray:
+        all_vecs = []
+        total = len(texts)
+        for i in range(0, total, batch_size):
+            batch = texts[i : i + batch_size]
+            enc = self.tokenizer.encode_batch(batch)
+            input_ids = np.array([e.ids for e in enc], dtype=np.int64)
+            attn_mask = np.array([e.attention_mask for e in enc], dtype=np.int64)
+            seq_len = input_ids.shape[1]
+            pos_ids = np.arange(seq_len, dtype=np.int64)[None, :]
+
+            x = (
+                self.w["embeddings.word_embeddings.weight"][input_ids]
+                + self.w["embeddings.position_embeddings.weight"][pos_ids]
+                + self.w["embeddings.token_type_embeddings.weight"][np.zeros_like(input_ids)]
+            )
+            x = self._layer_norm(x, self.w["embeddings.LayerNorm.weight"], self.w["embeddings.LayerNorm.bias"])
+
+            B, T, H = x.shape
+            for l in range(12):
+                pfx = f"encoder.layer.{l}.attention.self"
+                Q = (x @ self.w[f"{pfx}.query.weight"].T + self.w[f"{pfx}.query.bias"]).reshape(B, T, 12, 32).transpose(0, 2, 1, 3)
+                K = (x @ self.w[f"{pfx}.key.weight"].T + self.w[f"{pfx}.key.bias"]).reshape(B, T, 12, 32).transpose(0, 2, 1, 3)
+                V = (x @ self.w[f"{pfx}.value.weight"].T + self.w[f"{pfx}.value.bias"]).reshape(B, T, 12, 32).transpose(0, 2, 1, 3)
+
+                scores = np.matmul(Q, K.transpose(0, 1, 3, 2)) * self.scale
+                mask = (1.0 - attn_mask[:, None, None, :].astype(np.float32)) * -10000.0
+                attn = self._softmax(scores + mask)
+                context = np.matmul(attn, V).transpose(0, 2, 1, 3).reshape(B, T, H)
+
+                out_pfx = f"encoder.layer.{l}.attention.output"
+                context = context @ self.w[f"{out_pfx}.dense.weight"].T + self.w[f"{out_pfx}.dense.bias"]
+                x = self._layer_norm(x + context, self.w[f"{out_pfx}.LayerNorm.weight"], self.w[f"{out_pfx}.LayerNorm.bias"])
+
+                ffn_pfx = f"encoder.layer.{l}"
+                h = self._gelu(x @ self.w[f"{ffn_pfx}.intermediate.dense.weight"].T + self.w[f"{ffn_pfx}.intermediate.dense.bias"])
+                h = h @ self.w[f"{ffn_pfx}.output.dense.weight"].T + self.w[f"{ffn_pfx}.output.dense.bias"]
+                x = self._layer_norm(x + h, self.w[f"{ffn_pfx}.output.LayerNorm.weight"], self.w[f"{ffn_pfx}.output.LayerNorm.bias"])
+
+            cls_emb = x[:, 0, :]
+            norms = np.linalg.norm(cls_emb, axis=-1, keepdims=True)
+            all_vecs.append((cls_emb / np.maximum(norms, 1e-8)).astype(np.float32))
+
+            if show_progress_bar and total > batch_size:
+                print(f"  [Embedder] Encoded {min(i + batch_size, total)}/{total} chunks", end="\r", flush=True)
+
+        if show_progress_bar and total > batch_size:
+            print()
+        return np.vstack(all_vecs) if all_vecs else np.empty((0, 384), dtype=np.float32)
+
+
 class EmbeddingEngine:
     """
-    Wrapper around Hugging Face / Sentence-Transformers embedding models.
-    
-    Provides specialized methods for encoding document passages and search queries
-    with proper normalization and query instruction prefixes.
+    High-performance embedding engine for FinSight.
+    Uses cached weights and pure NumPy execution for zero-DLL-lock stability on Windows.
     """
 
     DEFAULT_MODEL: str = "BAAI/bge-small-en-v1.5"
@@ -37,31 +128,18 @@ class EmbeddingEngine:
         model_name: str = DEFAULT_MODEL,
         device: Optional[str] = None,
     ) -> None:
-        """
-        Initializes the embedding model on the specified device.
-
-        Parameters:
-            model_name: HuggingFace model identifier (default: 'BAAI/bge-small-en-v1.5').
-            device: 'cuda', 'cpu', or None (auto-detects CUDA if available).
-        """
-        # Lazy import of torch and SentenceTransformer to allow fast module import
-        import torch
-        from sentence_transformers import SentenceTransformer
-
-        if device is None:
-            self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        else:
-            self.device = device
-
-        logger.info(f"Loading embedding model '{model_name}' onto device: {self.device}")
         self.model_name = model_name
-        self.model = SentenceTransformer(model_name, device=self.device)
-        # SentenceTransformers >= 3.0 renamed get_sentence_embedding_dimension to get_embedding_dimension
-        if hasattr(self.model, "get_embedding_dimension"):
-            self.embedding_dim = self.model.get_embedding_dimension()
-        else:
-            self.embedding_dim = self.model.get_sentence_embedding_dimension()
-        logger.info(f"Model loaded successfully. Vector dimension: {self.embedding_dim}")
+        self.device = device or "cpu"
+        self.embedding_dim = 384
+
+        try:
+            logger.info(f"Initializing FastBertEmbedder for '{model_name}'...")
+            self.model = FastBertEmbedder(model_name=model_name)
+            logger.info(f"[OK] EmbeddingEngine loaded via pure NumPy engine (vector dim={self.embedding_dim})")
+        except Exception as e:
+            logger.warning(f"FastBertEmbedder unavailable ({e}), falling back to sentence_transformers...")
+            from sentence_transformers import SentenceTransformer
+            self.model = SentenceTransformer(model_name, device=self.device)
 
     def encode_passages(
         self,
@@ -69,31 +147,19 @@ class EmbeddingEngine:
         batch_size: int = 32,
         show_progress_bar: bool = True,
     ) -> np.ndarray:
-        """
-        Encodes a list of document passage texts into dense vectors.
-        
-        Passages are encoded directly without query instruction prefixes,
-        and vectors are L2-normalized so that cosine similarity equals dot product.
-
-        Parameters:
-            texts: List of document text chunks to encode.
-            batch_size: Number of texts processed in each forward pass.
-            show_progress_bar: Whether to display a progress indicator.
-
-        Returns:
-            np.ndarray: Matrix of shape (len(texts), embedding_dim) as float32.
-        """
         if not texts:
             return np.empty((0, self.embedding_dim), dtype=np.float32)
 
-        embeddings = self.model.encode(
+        if isinstance(self.model, FastBertEmbedder):
+            return self.model.encode(texts, batch_size=batch_size, show_progress_bar=show_progress_bar)
+
+        return self.model.encode(
             texts,
             batch_size=batch_size,
             show_progress_bar=show_progress_bar,
-            normalize_embeddings=True,  # Crucial: L2 norm = 1.0 for fast dot-product cosine similarity
+            normalize_embeddings=True,
             convert_to_numpy=True,
-        )
-        return embeddings.astype(np.float32)
+        ).astype(np.float32)
 
     def encode_queries(
         self,
@@ -101,38 +167,28 @@ class EmbeddingEngine:
         batch_size: int = 32,
         show_progress_bar: bool = False,
     ) -> np.ndarray:
-        """
-        Encodes user queries into dense vectors using BGE's asymmetric query instruction.
-
-        Parameters:
-            queries: A single query string or a list of query strings.
-            batch_size: Batch size for encoding.
-            show_progress_bar: Whether to display a progress bar.
-
-        Returns:
-            np.ndarray: Matrix of shape (num_queries, embedding_dim) as float32.
-        """
         if isinstance(queries, str):
             queries = [queries]
 
         if not queries:
             return np.empty((0, self.embedding_dim), dtype=np.float32)
 
-        # Apply BGE query instruction prefix for asymmetric search
         is_bge = "bge" in self.model_name.lower()
         if is_bge:
-            prefixed_queries = [f"{self.BGE_QUERY_PREFIX}{q.strip()}" for q in queries]
+            prefixed = [f"{self.BGE_QUERY_PREFIX}{q.strip()}" for q in queries]
         else:
-            prefixed_queries = [q.strip() for q in queries]
+            prefixed = [q.strip() for q in queries]
 
-        embeddings = self.model.encode(
-            prefixed_queries,
+        if isinstance(self.model, FastBertEmbedder):
+            return self.model.encode(prefixed, batch_size=batch_size, show_progress_bar=show_progress_bar)
+
+        return self.model.encode(
+            prefixed,
             batch_size=batch_size,
             show_progress_bar=show_progress_bar,
             normalize_embeddings=True,
             convert_to_numpy=True,
-        )
-        return embeddings.astype(np.float32)
+        ).astype(np.float32)
 
 
 

@@ -2,6 +2,7 @@
 *.md
 !README.md
 !docs/*.md
+!brain.md
 
 understanding/
 understandings/
