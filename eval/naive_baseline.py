@@ -160,16 +160,27 @@ def build_naive_corpus(
 def build_naive_index(
     corpus: List[Dict[str, Any]],
     engine: EmbeddingEngine,
+    cache_file: Optional[Path] = None,
 ) -> np.ndarray:
     """
     Encodes every chunk with BAAI/bge-small-en-v1.5 (same model as domain pipeline).
     Returns an (N, 384) float32 matrix for brute-force cosine search.
-    No HNSW, no Qdrant - intentionally flat.
+    Caches to disk if cache_file is provided.
     """
+    if cache_file is None:
+        cache_file = PROCESSED_DIR / "naive_embeddings.npy"
+
+    if cache_file.exists():
+        cached = np.load(cache_file)
+        if len(cached) == len(corpus):
+            print(f"\n[Naive Baseline] Loaded cached naive embeddings from {cache_file} (shape: {cached.shape})")
+            return cached
+
     print("\n[Naive Baseline] Encoding chunks with BAAI/bge-small-en-v1.5 ...")
     texts = [c["text"] for c in corpus]
     embeddings = engine.encode_passages(texts, batch_size=64, show_progress_bar=True)
-    print(f"[Naive Baseline] Done. Embedding matrix shape: {embeddings.shape}")
+    np.save(cache_file, embeddings)
+    print(f"[Naive Baseline] Done. Saved embedding matrix to {cache_file} (shape: {embeddings.shape})")
     return embeddings
 
 
@@ -206,10 +217,10 @@ def naive_search(
 
 
 # ---------------------------------------------------------------------------
-# Part 3: Evaluation - same 8-query test suite as search.py
+# Part 3: Evaluation - 10-query test suite across all 6 companies
 # ---------------------------------------------------------------------------
 
-# Mirrors evaluate_retrieval_quality() default test_suite exactly
+# Mirrors evaluate_retrieval_quality() default test_suite across all 6 companies
 EVAL_TEST_SUITE: List[Dict[str, Any]] = [
     {
         "query": "What were Apple's annual net sales and iPhone product revenue in 2024?",
@@ -249,6 +260,16 @@ EVAL_TEST_SUITE: List[Dict[str, Any]] = [
     {
         "query": "What are Amazon's primary logistics, fulfillment, and supply chain operational risks?",
         "expected_ticker": "AMZN",
+        "expected_section": "item_1a",
+    },
+    {
+        "query": "What drove NVIDIA's Data Center revenue expansion and AI GPU computing demand?",
+        "expected_ticker": "NVDA",
+        "expected_section": "item_7",
+    },
+    {
+        "query": "What are NVIDIA's primary supply chain concentration and semiconductor manufacturing risks?",
+        "expected_ticker": "NVDA",
         "expected_section": "item_1a",
     },
 ]

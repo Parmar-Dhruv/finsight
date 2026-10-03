@@ -1,7 +1,7 @@
 # FinSight — Problem Statement & Phase Task Breakdown
 
 **Team:** Nilay (Vector DB & Retrieval) · Dhruv (LLM Integration & Fine-tuning) · Jay (Deployment & MLOps)
-**Ratified scope:** 5 companies (AAPL, MSFT, AMZN, GOOGL, META), US Public Tech sector, 10-K only, FY2023-2024
+**Ratified scope:** 6 companies (AAPL, MSFT, AMZN, GOOGL, META, NVDA), US Public Tech sector, 10-K only, FY2023-2024
 
 This document replaces open-ended role ownership with **small, atomic, assigned tasks**. Each task is scoped so the person executes it, rather than makes a design decision on your behalf. Hand these out incrementally rather than all at once.
 
@@ -52,7 +52,7 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 
 | Person | Branch | What exists |
 |---|---|---|
-| Nilay | `nilay` | Full retrieval pipeline: parsing, structure-aware chunking, BGE embeddings, Qdrant index, metadata filtering, `retrieve()`/`format_context_for_prompt()` API. Evaluated on only 8 queries. No naive baseline recorded. No hybrid/BM25. No reranking |
+| Nilay | `nilay` | Full retrieval pipeline for all 6 companies (AAPL, MSFT, AMZN, GOOGL, META, NVDA): parsing, structure-aware chunking, BGE embeddings, Qdrant Cloud index (3,504 chunks), metadata filtering, `retrieve()`/`format_context_for_prompt()` API. Naive baseline (N-1) implemented in `eval/naive_baseline.py` and benchmarked across all 6 companies. |
 | Jay | `jay` | A 100-question gold-answer benchmark (`evaluation/dataset/questions.json`) covering all 5 companies, both fiscal years, 6 question types. **No API, Docker, or CI work yet** |
 | Dhruv | `dhruv` | Branch exists, no commits beyond initial scaffold. Nothing started |
 
@@ -65,7 +65,14 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 ### Phase 1 — Data & Baseline *(retroactive completion)*
 
 **Nilay**
-- **N-1:** Build a naive baseline pipeline — fixed 512-token chunks, no structure-awareness, no metadata filtering, same embedding model. Run it through the existing `evaluate_retrieval_quality()` function. Output: one table with Hit Rate@1/3/5 and MRR for the naive pipeline, to sit next to the existing domain-adapted numbers.
+- **N-1 (COMPLETED):** Build a naive baseline pipeline — fixed 512-token chunks (1,641 chunks across all 6 companies), no structure-awareness, no metadata filtering, same embedding model (`BAAI/bge-small-en-v1.5`). Run through `evaluate_retrieval_quality()` on all 6 companies. Output recorded below:
+  
+  | Metric | Naive Baseline | Domain-Adapted | Delta |
+  |---|---|---|---|
+  | **Hit Rate @ 1** | 20.0% | **70.0%** | **+50.0 pp** |
+  | **Hit Rate @ 3** | 30.0% | **80.0%** | **+50.0 pp** |
+  | **Hit Rate @ 5** | 40.0% | **80.0%** | **+40.0 pp** |
+  | **MRR** | 0.2750 | **0.7333** | **+0.4583** |
 
 **Jay**
 - **J-1:** Scaffold a FastAPI service with three stub endpoints: `/query`, `/retrieve`, `/health`. They can return hardcoded/mock responses for now — the goal is a running service Dhruv and Nilay can point real logic at later, not full functionality yet.

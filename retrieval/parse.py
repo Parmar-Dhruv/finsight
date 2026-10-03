@@ -179,6 +179,18 @@ def extract_sections(text: str) -> dict[str, str]:
             sec_text = text[start_pos:start_pos + 60000].strip()
             
         extracted[sec_key] = sec_text
+
+    # Cross-reference handling for Item 8: companies like NVIDIA put only a one-sentence
+    # cross-reference in Item 8 ("information set forth in Consolidated Financial Statements...")
+    # and put the actual statements later in Item 15.
+    if len(extracted.get("item_8", "")) < 1000:
+        fs_start_pat = r"Report of Independent Registered Public Accounting Firm|Consolidated Statements of (Income|Operations)"
+        fs_start_match = re.search(fs_start_pat, text, re.IGNORECASE)
+        if fs_start_match:
+            fs_start = fs_start_match.start()
+            sig_match = re.search(r"Signatures\s+Pursuant to the requirements|Item\s+16\b", text[fs_start:], re.IGNORECASE)
+            fs_end = fs_start + sig_match.start() if sig_match else fs_start + 130000
+            extracted["item_8"] = text[fs_start:fs_end].strip()
         
     return extracted
 

@@ -211,6 +211,16 @@ def evaluate_retrieval_quality(
                 "expected_ticker": "AMZN",
                 "expected_section": "item_1a",
             },
+            {
+                "query": "What drove NVIDIA's Data Center revenue expansion and AI GPU computing demand?",
+                "expected_ticker": "NVDA",
+                "expected_section": "item_7",
+            },
+            {
+                "query": "What are NVIDIA's primary supply chain concentration and semiconductor manufacturing risks?",
+                "expected_ticker": "NVDA",
+                "expected_section": "item_1a",
+            },
         ]
 
     retriever = FinSightRetriever.get_instance()
