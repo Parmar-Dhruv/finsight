@@ -24,6 +24,7 @@ if str(BASE_DIR) not in sys.path:
 
 from retrieval.embed import EmbeddingEngine
 from retrieval.index import QdrantIndexManager, search_index
+from retrieval.hybrid import BM25Index, reciprocal_rank_fusion
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -33,8 +34,9 @@ logger = logging.getLogger(__name__)
 
 class FinSightRetriever:
     """
-    Singleton retriever that keeps the embedding model and vector database
-    connection warm in memory across requests.
+    Singleton retriever that keeps the embedding model, vector database,
+    and BM25 sparse index warm in memory across requests.
+    Supports Dense Vector Search, BM25 Sparse Search, and Hybrid Fusion (RRF).
     """
 
     _instance: Optional["FinSightRetriever"] = None
@@ -44,6 +46,7 @@ class FinSightRetriever:
         logger.info("Initializing FinSightRetriever singleton...")
         self.engine = EmbeddingEngine()
         self.index_manager = QdrantIndexManager(local_path=local_path)
+        self.bm25_index: Optional[BM25Index] = None
         logger.info("[OK] FinSightRetriever ready for incoming queries.")
 
     @classmethod
@@ -53,6 +56,20 @@ class FinSightRetriever:
             cls._instance = cls(local_path=local_path)
         return cls._instance
 
+    def _ensure_bm25(self) -> BM25Index:
+        """Lazily initializes the BM25 index on first hybrid call."""
+        if self.bm25_index is None:
+            self.bm25_index = BM25Index.get_instance()
+        return self.bm25_index
+
+    def _ensure_cross_encoder(self):
+        """Lazily initializes the pure-NumPy FastCrossEncoder for reranking."""
+        if getattr(self, "cross_encoder", None) is None:
+            from retrieval.rerank import get_cross_encoder
+            logger.info("Initializing FastCrossEncoder (zero-PyTorch, pure NumPy)...")
+            self.cross_encoder = get_cross_encoder()
+        return self.cross_encoder
+
     def retrieve(
         self,
         query: str,
@@ -60,6 +77,13 @@ class FinSightRetriever:
         ticker: Optional[str] = None,
         fiscal_year: Optional[int] = None,
         section: Optional[str] = None,
+        hybrid: bool = False,
+        rerank: bool = False,
+        candidate_pool: int = 25,
+        rerank_pool: int = 25,
+        dense_weight: float = 1.0,
+        sparse_weight: float = 1.0,
+        rrf_k: int = 60,
     ) -> List[Dict[str, Any]]:
         """
         Retrieves the top-k most relevant financial text chunks for a given query.
@@ -70,6 +94,11 @@ class FinSightRetriever:
             ticker: Optional company ticker filter (e.g. 'AAPL', 'MSFT').
             fiscal_year: Optional filing fiscal year (e.g. 2024, 2023).
             section: Optional 10-K section filter (e.g. 'item_7', 'item_1a').
+            hybrid: If True, combines Dense Vector Search with BM25 Sparse Search via RRF.
+            candidate_pool: Number of candidates to fetch from each retriever before fusion.
+            dense_weight: Relative weight for dense vector ranking in RRF.
+            sparse_weight: Relative weight for BM25 lexical ranking in RRF.
+            rrf_k: Smoothing constant for Reciprocal Rank Fusion (default: 60).
 
         Returns:
             List of result dictionaries containing score, chunk_id, ticker,
@@ -78,15 +107,67 @@ class FinSightRetriever:
         if not query or not query.strip():
             return []
 
-        return search_index(
-            manager=self.index_manager,
-            query=query.strip(),
-            engine=self.engine,
-            top_k=k,
-            ticker=ticker,
-            fiscal_year=fiscal_year,
-            section=section,
-        )
+        clean_query = query.strip()
+
+        # Determine the number of candidates to fetch before optional reranking
+        fetch_k = rerank_pool if rerank else k
+        
+        # Pure dense vector search
+        if not hybrid:
+            results = search_index(
+                manager=self.index_manager,
+                query=clean_query,
+                engine=self.engine,
+                top_k=fetch_k,
+                ticker=ticker,
+                fiscal_year=fiscal_year,
+                section=section,
+            )
+        else:
+            # Hybrid Search: Dense + Sparse with Reciprocal Rank Fusion
+            bm25 = self._ensure_bm25()
+            pool_size = max(fetch_k, candidate_pool)
+
+            dense_candidates = search_index(
+                manager=self.index_manager,
+                query=clean_query,
+                engine=self.engine,
+                top_k=pool_size,
+                ticker=ticker,
+                fiscal_year=fiscal_year,
+                section=section,
+            )
+
+            sparse_candidates = bm25.search(
+                query=clean_query,
+                top_k=pool_size,
+                ticker=ticker,
+                fiscal_year=fiscal_year,
+                section=section,
+            )
+
+            results = reciprocal_rank_fusion(
+                dense_results=dense_candidates,
+                sparse_results=sparse_candidates,
+                top_k=fetch_k,
+                rrf_k=rrf_k,
+                dense_weight=dense_weight,
+                sparse_weight=sparse_weight,
+            )
+            
+        if rerank and results:
+            cross_encoder = self._ensure_cross_encoder()
+            pairs = [[clean_query, doc["text"]] for doc in results]
+            scores = cross_encoder.predict(pairs)
+            
+            for idx, doc in enumerate(results):
+                doc["rerank_score"] = float(scores[idx])
+                doc["score"] = float(scores[idx]) # Overwrite score so format_context_for_prompt works transparently
+                
+            results.sort(key=lambda x: x["rerank_score"], reverse=True)
+            results = results[:k]
+            
+        return results
 
     def close(self) -> None:
         """Closes internal database connections cleanly."""
@@ -100,13 +181,20 @@ def retrieve(
     ticker: Optional[str] = None,
     fiscal_year: Optional[int] = None,
     section: Optional[str] = None,
+    hybrid: bool = False,
+    rerank: bool = False,
+    candidate_pool: int = 25,
+    rerank_pool: int = 25,
+    dense_weight: float = 1.0,
+    sparse_weight: float = 1.0,
+    rrf_k: int = 60,
 ) -> List[Dict[str, Any]]:
     """
     Public API function for pipeline integration (Dhruv / Jay).
     
     Example:
         >>> from retrieval.search import retrieve
-        >>> chunks = retrieve("What was Microsoft's cloud growth?", k=3, ticker="MSFT")
+        >>> chunks = retrieve("What was Microsoft's cloud growth?", k=3, ticker="MSFT", hybrid=True)
     """
     retriever = FinSightRetriever.get_instance()
     return retriever.retrieve(
@@ -115,6 +203,13 @@ def retrieve(
         ticker=ticker,
         fiscal_year=fiscal_year,
         section=section,
+        hybrid=hybrid,
+        rerank=rerank,
+        candidate_pool=candidate_pool,
+        rerank_pool=rerank_pool,
+        dense_weight=dense_weight,
+        sparse_weight=sparse_weight,
+        rrf_k=rrf_k,
     )
 
 
@@ -159,6 +254,8 @@ def format_context_for_prompt(
 def evaluate_retrieval_quality(
     test_suite: Optional[List[Dict[str, Any]]] = None,
     top_k: int = 5,
+    hybrid: bool = False,
+    rerank: bool = False,
 ) -> Dict[str, float]:
     """
     Runs an Information Retrieval (IR) evaluation benchmark against the vector index.
@@ -230,21 +327,24 @@ def evaluate_retrieval_quality(
     hits_at_5 = 0
     reciprocal_ranks: List[float] = []
 
+    mode_label = "HYBRID (Dense + BM25 RRF)" if hybrid else "DENSE-ONLY"
+    if rerank:
+        mode_label += " + RERANK"
     print("\n" + "=" * 75)
-    print(f"FINSIGHT RETRIEVAL QUALITY EVALUATION (Benchmark: {total_queries} queries)")
+    print(f"FINSIGHT RETRIEVAL QUALITY EVALUATION [{mode_label}] ({total_queries} queries)")
     print("=" * 75)
 
     for idx, test in enumerate(test_suite, 1):
         q = test["query"]
         exp_ticker = test["expected_ticker"]
-        exp_section = test["expected_section"]
+        exp_sections = test.get("expected_sections") or [test.get("expected_section")]
 
         # Run unconstrained global retrieval (no metadata filters) to stress-test semantic matching
-        results = retriever.retrieve(query=q, k=top_k)
+        results = retriever.retrieve(query=q, k=top_k, hybrid=hybrid, rerank=rerank)
 
         first_match_rank: Optional[int] = None
         for rank, r in enumerate(results, 1):
-            if r["ticker"] == exp_ticker and r["section"] == exp_section:
+            if r["ticker"] == exp_ticker and r["section"] in exp_sections:
                 first_match_rank = rank
                 break
 
@@ -260,7 +360,8 @@ def evaluate_retrieval_quality(
         reciprocal_ranks.append(rr)
 
         status_tag = f"[MATCH Rank {first_match_rank}]" if first_match_rank else "[MISS in top-5]"
-        print(f"[{idx:2d}/{total_queries}] {status_tag:<18} | Target: [{exp_ticker} {exp_section}]")
+        sec_label = "/".join(exp_sections)
+        print(f"[{idx:2d}/{total_queries}] {status_tag:<18} | Target: [{exp_ticker} {sec_label}]")
         print(f"     Query: \"{q[:65]}...\"")
 
     hit_rate_1 = (hits_at_1 / total_queries) * 100

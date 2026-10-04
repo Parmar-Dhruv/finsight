@@ -1,0 +1,1973 @@
+{
+  "summary": {
+    "total_questions": 100,
+    "naive_metrics": {
+      "hit_rate_at_1": 13.0,
+      "hit_rate_at_3": 28.000000000000004,
+      "hit_rate_at_5": 34.0,
+      "mrr": 0.21283333333333335,
+      "total_queries": 100
+    },
+    "dense_metrics": {
+      "hit_rate_at_1": 69.0,
+      "hit_rate_at_3": 82.0,
+      "hit_rate_at_5": 91.0,
+      "mrr": 0.7633333333333333,
+      "total_queries": 100
+    },
+    "hybrid_metrics": {
+      "hit_rate_at_1": 55.00000000000001,
+      "hit_rate_at_3": 68.0,
+      "hit_rate_at_5": 77.0,
+      "mrr": 0.6276666666666667,
+      "total_queries": 100
+    },
+    "delta_hybrid_vs_naive": {
+      "hit_rate_at_1": 42.00000000000001,
+      "hit_rate_at_5": 43.0,
+      "mrr": 0.4148333333333334
+    },
+    "delta_hybrid_vs_dense": {
+      "hit_rate_at_1": -13.999999999999993,
+      "hit_rate_at_5": -14.0,
+      "mrr": -0.1356666666666666
+    }
+  },
+  "by_type": {
+    "numeric_extraction": {
+      "count": 49,
+      "hr1": 57.14285714285714,
+      "hr5": 71.42857142857143,
+      "mrr": 0.6180272108843538
+    },
+    "numeric_reasoning": {
+      "count": 14,
+      "hr1": 42.857142857142854,
+      "hr5": 71.42857142857143,
+      "mrr": 0.5416666666666666
+    },
+    "qualitative": {
+      "count": 9,
+      "hr1": 33.33333333333333,
+      "hr5": 66.66666666666666,
+      "mrr": 0.4388888888888889
+    },
+    "segment_analysis": {
+      "count": 9,
+      "hr1": 66.66666666666666,
+      "hr5": 100.0,
+      "mrr": 0.8148148148148148
+    },
+    "tabular": {
+      "count": 4,
+      "hr1": 75.0,
+      "hr5": 100.0,
+      "mrr": 0.8
+    },
+    "temporal_comparison": {
+      "count": 15,
+      "hr1": 60.0,
+      "hr5": 86.66666666666667,
+      "mrr": 0.6944444444444444
+    }
+  },
+  "by_company": {
+    "AAPL": {
+      "count": 20,
+      "hr1": 75.0,
+      "hr5": 90.0,
+      "mrr": 0.7866666666666666
+    },
+    "AMZN": {
+      "count": 20,
+      "hr1": 50.0,
+      "hr5": 65.0,
+      "mrr": 0.5625
+    },
+    "GOOGL": {
+      "count": 20,
+      "hr1": 60.0,
+      "hr5": 75.0,
+      "mrr": 0.6541666666666667
+    },
+    "META": {
+      "count": 20,
+      "hr1": 45.0,
+      "hr5": 85.0,
+      "mrr": 0.5933333333333334
+    },
+    "MSFT": {
+      "count": 20,
+      "hr1": 45.0,
+      "hr5": 70.0,
+      "mrr": 0.5416666666666667
+    }
+  },
+  "hybrid_detailed_results": [
+    {
+      "id": "AAPL-001",
+      "query": "What was Apple's total net revenue for fiscal year 2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-002",
+      "query": "What was Apple's gross margin percentage for fiscal year 2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "AAPL-003",
+      "query": "How much revenue did Apple generate from its Services segment in fiscal year 2024?",
+      "ticker": "AAPL",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "NVDA:item_1"
+      ]
+    },
+    {
+      "id": "AAPL-004",
+      "query": "What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "AAPL-005",
+      "query": "What were the primary risk factors Apple identified related to supply chain disruptions in its FY2024 10-K?",
+      "ticker": "AAPL",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_1a",
+        "META:item_1a",
+        "META:item_1a",
+        "NVDA:item_7",
+        "AAPL:item_1a"
+      ]
+    },
+    {
+      "id": "AAPL-006",
+      "query": "What was Apple's diluted earnings per share (EPS) for fiscal year 2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "META:item_7",
+        "MSFT:item_8",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-007",
+      "query": "How did Apple's iPhone revenue in FY2024 compare to FY2023?",
+      "ticker": "AAPL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-008",
+      "query": "What was Apple's total research and development expenditure in FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-009",
+      "query": "What percentage of Apple's total revenue came from international markets (outside the Americas) in FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "tabular",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 5,
+      "reciprocal_rank": 0.2,
+      "retrieved_top_sections": [
+        "NVDA:item_1a",
+        "AAPL:item_8",
+        "AAPL:item_1",
+        "AAPL:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "AAPL-010",
+      "query": "What was Apple's total long-term debt as reported in its FY2024 10-K?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-011",
+      "query": "How much did Apple spend on share repurchases during FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "AAPL-012",
+      "query": "What was Apple's operating income as a percentage of revenue (operating margin) for FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-013",
+      "query": "What legal proceedings or regulatory risks did Apple disclose in its FY2024 10-K?",
+      "ticker": "AAPL",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 5,
+      "reciprocal_rank": 0.2,
+      "retrieved_top_sections": [
+        "AAPL:item_1a",
+        "AAPL:item_1a",
+        "AAPL:item_1a",
+        "AAPL:item_1a",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-014",
+      "query": "What was Apple's revenue from the Greater China region in FY2024, and how did it change from FY2023?",
+      "ticker": "AAPL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_7",
+        "NVDA:item_7",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-015",
+      "query": "What was Apple's effective tax rate for FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8",
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_7",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-016",
+      "query": "What was Apple's free cash flow for FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "META:item_7",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "AAPL-017",
+      "query": "How many employees did Apple report at the end of FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_1"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-018",
+      "query": "What was the breakdown of Apple's product revenue versus services revenue in FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "AAPL-019",
+      "query": "What were Apple's capital expenditures in FY2024 and what were they primarily used for?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "NVDA:item_7",
+        "AAPL:item_8",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "AAPL-020",
+      "query": "What was Apple's net income for FY2024?",
+      "ticker": "AAPL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-001",
+      "query": "What was Microsoft's total revenue for fiscal year 2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "NVDA:item_7",
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "GOOGL:item_8",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-002",
+      "query": "How much revenue did Microsoft's Intelligent Cloud segment generate in FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_7",
+        "MSFT:item_7",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-003",
+      "query": "What was Microsoft's year-over-year revenue growth rate from FY2023 to FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_7",
+        "MSFT:item_7",
+        "MSFT:item_7",
+        "META:item_7",
+        "NVDA:item_7"
+      ]
+    },
+    {
+      "id": "MSFT-004",
+      "query": "What was Microsoft's operating income and operating margin for FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "MSFT-005",
+      "query": "What AI-related risks did Microsoft disclose in its FY2024 10-K?",
+      "ticker": "MSFT",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "META:item_1a",
+        "MSFT:item_1a",
+        "MSFT:item_1a",
+        "NVDA:item_1a",
+        "META:item_1a"
+      ]
+    },
+    {
+      "id": "MSFT-006",
+      "query": "What was Microsoft's diluted earnings per share for FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "META:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-007",
+      "query": "How much did Microsoft spend on research and development in FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "MSFT:item_1a",
+        "MSFT:item_1",
+        "MSFT:item_1",
+        "META:item_7",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "MSFT-008",
+      "query": "What were the revenue contributions of each of Microsoft's three operating segments in FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "tabular",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "META:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-009",
+      "query": "What was Microsoft's total cash, cash equivalents, and short-term investments at the end of FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-010",
+      "query": "How did Microsoft's Intelligent Cloud segment operating income change from FY2023 to FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_7",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_1"
+      ]
+    },
+    {
+      "id": "MSFT-011",
+      "query": "What was the total acquisition cost of Activision Blizzard as reported in Microsoft's FY2024 10-K?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_7",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-012",
+      "query": "What was Microsoft's net income for FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "MSFT:item_1",
+        "MSFT:item_8",
+        "AAPL:item_7",
+        "MSFT:item_7"
+      ]
+    },
+    {
+      "id": "MSFT-013",
+      "query": "What was Microsoft's capital expenditure in FY2024 and what drove the increase?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_7",
+        "MSFT:item_7",
+        "AAPL:item_1a",
+        "MSFT:item_8",
+        "AAPL:item_1a"
+      ]
+    },
+    {
+      "id": "MSFT-014",
+      "query": "What competitive risks did Microsoft identify in the cloud computing market in its FY2024 10-K?",
+      "ticker": "MSFT",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": 4,
+      "reciprocal_rank": 0.25,
+      "retrieved_top_sections": [
+        "MSFT:item_7",
+        "MSFT:item_7",
+        "MSFT:item_7",
+        "MSFT:item_1a",
+        "MSFT:item_1"
+      ]
+    },
+    {
+      "id": "MSFT-015",
+      "query": "What dividends per share did Microsoft declare in FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "META:item_7",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "MSFT-016",
+      "query": "What was Microsoft's gross margin percentage for FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "MSFT-017",
+      "query": "How many employees did Microsoft report at the end of FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_1"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_1",
+        "MSFT:item_1",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_1"
+      ]
+    },
+    {
+      "id": "MSFT-018",
+      "query": "What was the revenue growth of Microsoft's Productivity and Business Processes segment from FY2023 to FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "MSFT:item_1",
+        "MSFT:item_1",
+        "MSFT:item_1"
+      ]
+    },
+    {
+      "id": "MSFT-019",
+      "query": "What was Microsoft's effective tax rate for FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8",
+        "item_7"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "MSFT:item_8",
+        "GOOGL:item_8",
+        "AAPL:item_7",
+        "NVDA:item_7"
+      ]
+    },
+    {
+      "id": "MSFT-020",
+      "query": "What was Microsoft's free cash flow for FY2024?",
+      "ticker": "MSFT",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 4,
+      "reciprocal_rank": 0.25,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "META:item_7",
+        "META:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-001",
+      "query": "What was Alphabet's total revenue for fiscal year 2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "NVDA:item_8",
+        "GOOGL:item_8",
+        "NVDA:item_7",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-002",
+      "query": "How much revenue did Google Cloud generate in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_1",
+        "GOOGL:item_8",
+        "MSFT:item_7"
+      ]
+    },
+    {
+      "id": "GOOGL-003",
+      "query": "What was the year-over-year growth rate of Google Cloud revenue from FY2023 to FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "META:item_7",
+        "MSFT:item_7",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "GOOGL-004",
+      "query": "What was Alphabet's diluted earnings per share for FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "META:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-005",
+      "query": "What regulatory and antitrust risks did Alphabet disclose in its FY2024 10-K?",
+      "ticker": "GOOGL",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_1",
+        "AAPL:item_1a",
+        "GOOGL:item_1",
+        "GOOGL:item_8",
+        "GOOGL:item_7"
+      ]
+    },
+    {
+      "id": "GOOGL-006",
+      "query": "How much did Alphabet spend on research and development in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "MSFT:item_1",
+        "GOOGL:item_8",
+        "NVDA:item_1a",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-007",
+      "query": "What was the breakdown of Google Services revenue by category (Search, YouTube, Network, Other) in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "tabular",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_1"
+      ]
+    },
+    {
+      "id": "GOOGL-008",
+      "query": "What was Alphabet's operating margin for FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_1a",
+        "NVDA:item_7",
+        "GOOGL:item_1a",
+        "NVDA:item_8",
+        "GOOGL:item_1"
+      ]
+    },
+    {
+      "id": "GOOGL-009",
+      "query": "How much did Alphabet spend on share repurchases in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_1a",
+        "GOOGL:item_8",
+        "GOOGL:item_1a",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-010",
+      "query": "What was Google Cloud's operating income or loss in FY2024 compared to FY2023?",
+      "ticker": "GOOGL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "GOOGL:item_8",
+        "META:item_7",
+        "GOOGL:item_8",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-011",
+      "query": "What was Alphabet's net income for FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-012",
+      "query": "What was Alphabet's capital expenditure in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-013",
+      "query": "What losses did Alphabet's Other Bets segment report in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "retrieved_top_sections": [
+        "GOOGL:item_1",
+        "GOOGL:item_1",
+        "GOOGL:item_7",
+        "GOOGL:item_7",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-014",
+      "query": "How many employees did Alphabet report at the end of FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_1"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_1a",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-015",
+      "query": "What was the growth rate of YouTube advertising revenue from FY2023 to FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 4,
+      "reciprocal_rank": 0.25,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "GOOGL:item_8",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "GOOGL-016",
+      "query": "What was Alphabet's effective tax rate for FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8",
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "AAPL:item_7",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "GOOGL-017",
+      "query": "What was Alphabet's total cash, cash equivalents, and marketable securities at the end of FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-018",
+      "query": "What percentage of Alphabet's total revenue came from Google Search and other advertising in FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "GOOGL:item_8"
+      ]
+    },
+    {
+      "id": "GOOGL-019",
+      "query": "What AI-related investments and strategy did Alphabet describe in its FY2024 10-K?",
+      "ticker": "GOOGL",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1",
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_1",
+        "AAPL:item_1a",
+        "GOOGL:item_1a",
+        "NVDA:item_1",
+        "GOOGL:item_1a"
+      ]
+    },
+    {
+      "id": "GOOGL-020",
+      "query": "What was Alphabet's total revenue growth rate from FY2023 to FY2024?",
+      "ticker": "GOOGL",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "GOOGL:item_8",
+        "NVDA:item_7",
+        "GOOGL:item_8",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-001",
+      "query": "What was Amazon's total net sales for fiscal year 2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_7",
+        "AAPL:item_8",
+        "AAPL:item_7"
+      ]
+    },
+    {
+      "id": "AMZN-002",
+      "query": "How much revenue did Amazon Web Services (AWS) generate in FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-003",
+      "query": "What was AWS's year-over-year revenue growth rate from FY2023 to FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "META:item_7",
+        "META:item_7",
+        "AMZN:item_8",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "AMZN-004",
+      "query": "What was Amazon's operating income for FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AAPL:item_8",
+        "AMZN:item_8",
+        "AAPL:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-005",
+      "query": "What fulfillment and logistics risks did Amazon identify in its FY2024 10-K?",
+      "ticker": "AMZN",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AMZN:item_7",
+        "AMZN:item_7",
+        "AMZN:item_8",
+        "AMZN:item_1",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-006",
+      "query": "What was Amazon's diluted earnings per share for FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AAPL:item_8",
+        "META:item_8",
+        "AAPL:item_8",
+        "AAPL:item_8",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-007",
+      "query": "What was AWS's operating margin for FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AMZN:item_8",
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-008",
+      "query": "How did Amazon's North America segment operating income compare between FY2023 and FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-009",
+      "query": "What was Amazon's total capital expenditure (including finance leases) in FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 4,
+      "reciprocal_rank": 0.25,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "GOOGL:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-010",
+      "query": "What was Amazon's net income for FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-011",
+      "query": "What was the revenue breakdown between Amazon's North America, International, and AWS segments in FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "tabular",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-012",
+      "query": "How much did Amazon spend on technology and infrastructure (R&D equivalent) in FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_7",
+        "GOOGL:item_1a",
+        "AMZN:item_7"
+      ]
+    },
+    {
+      "id": "AMZN-013",
+      "query": "What was Amazon's total revenue growth rate from FY2023 to FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_1",
+        "NVDA:item_7",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-014",
+      "query": "How many employees did Amazon report at the end of FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_1"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-015",
+      "query": "What was Amazon's advertising services revenue in FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "META:item_7",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-016",
+      "query": "What was Amazon's operating margin for FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "AAPL:item_7",
+        "NVDA:item_7"
+      ]
+    },
+    {
+      "id": "AMZN-017",
+      "query": "What was Amazon's International segment operating income or loss in FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "META:item_7",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-018",
+      "query": "What was Amazon's total long-term debt at the end of FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "MSFT:item_8",
+        "AMZN:item_8",
+        "GOOGL:item_8",
+        "AMZN:item_8",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-019",
+      "query": "What subscription services revenue did Amazon report in FY2024, and what does it include?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "AMZN-020",
+      "query": "What was Amazon's effective tax rate for FY2024?",
+      "ticker": "AMZN",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8",
+        "item_7"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "GOOGL:item_8",
+        "AAPL:item_7",
+        "MSFT:item_8"
+      ]
+    },
+    {
+      "id": "META-001",
+      "query": "What was Meta Platforms' total revenue for fiscal year 2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 4,
+      "reciprocal_rank": 0.25,
+      "retrieved_top_sections": [
+        "NVDA:item_7",
+        "NVDA:item_7",
+        "NVDA:item_8",
+        "META:item_8",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "META-002",
+      "query": "How much revenue did Meta's Family of Apps segment generate versus Reality Labs in FY2024?",
+      "ticker": "META",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "META:item_1",
+        "META:item_8",
+        "META:item_1",
+        "META:item_8",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "META-003",
+      "query": "What was the operating loss of Meta's Reality Labs segment in FY2024?",
+      "ticker": "META",
+      "answer_type": "segment_analysis",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "META:item_1a",
+        "META:item_8",
+        "META:item_1",
+        "META:item_1a",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "META-004",
+      "query": "What was Meta's year-over-year revenue growth rate from FY2023 to FY2024?",
+      "ticker": "META",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "META-005",
+      "query": "What privacy and data regulation risks did Meta disclose in its FY2024 10-K?",
+      "ticker": "META",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_1a",
+        "META:item_1a",
+        "META:item_1",
+        "META:item_8",
+        "META:item_1"
+      ]
+    },
+    {
+      "id": "META-006",
+      "query": "What was Meta's diluted earnings per share for FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_8",
+        "META:item_8",
+        "META:item_8",
+        "META:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "META-007",
+      "query": "What was Meta's operating margin for FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 2,
+      "reciprocal_rank": 0.5,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "META:item_8",
+        "META:item_1a",
+        "META:item_8",
+        "META:item_1a"
+      ]
+    },
+    {
+      "id": "META-008",
+      "query": "How much did Meta spend on research and development in FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 4,
+      "reciprocal_rank": 0.25,
+      "retrieved_top_sections": [
+        "META:item_1",
+        "META:item_1",
+        "META:item_1",
+        "META:item_7",
+        "META:item_1"
+      ]
+    },
+    {
+      "id": "META-009",
+      "query": "What was Meta's capital expenditure in FY2024 and what drove it?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_8",
+        "META:item_1a",
+        "META:item_8",
+        "META:item_1a",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "META-010",
+      "query": "How much did Meta spend on share repurchases in FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "GOOGL:item_8",
+        "MSFT:item_8",
+        "MSFT:item_8",
+        "NVDA:item_7",
+        "NVDA:item_8"
+      ]
+    },
+    {
+      "id": "META-011",
+      "query": "What was Meta's net income for FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_8",
+        "META:item_8",
+        "META:item_8",
+        "META:item_1a",
+        "META:item_1a"
+      ]
+    },
+    {
+      "id": "META-012",
+      "query": "What were Meta's daily active people (DAP) and monthly active people (MAP) across its family of apps at the end of FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_7"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "META-013",
+      "query": "How did Meta's Reality Labs operating losses change from FY2023 to FY2024?",
+      "ticker": "META",
+      "answer_type": "temporal_comparison",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "retrieved_top_sections": [
+        "META:item_1a",
+        "META:item_1a",
+        "META:item_8",
+        "META:item_8",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "META-014",
+      "query": "What was Meta's average revenue per person (ARPP) across its family of apps in FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "META:item_7",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "META-015",
+      "query": "How many employees did Meta report at the end of FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_1"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_1",
+        "META:item_1",
+        "META:item_1",
+        "META:item_1",
+        "META:item_1"
+      ]
+    },
+    {
+      "id": "META-016",
+      "query": "What was Meta's gross margin percentage for FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 3,
+      "reciprocal_rank": 0.3333333333333333,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "AAPL:item_7",
+        "META:item_8",
+        "AAPL:item_7",
+        "META:item_8"
+      ]
+    },
+    {
+      "id": "META-017",
+      "query": "What was Meta's total cash, cash equivalents, and marketable securities at the end of FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8",
+        "AMZN:item_8"
+      ]
+    },
+    {
+      "id": "META-018",
+      "query": "What was the percentage of Meta's revenue that came from advertising in FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_reasoning",
+      "expected_sections": [
+        "item_7",
+        "item_8"
+      ],
+      "match_rank": 1,
+      "reciprocal_rank": 1.0,
+      "retrieved_top_sections": [
+        "META:item_7",
+        "META:item_7",
+        "META:item_8",
+        "META:item_7",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "META-019",
+      "query": "What was Meta's effective tax rate for FY2024?",
+      "ticker": "META",
+      "answer_type": "numeric_extraction",
+      "expected_sections": [
+        "item_8",
+        "item_7"
+      ],
+      "match_rank": 5,
+      "reciprocal_rank": 0.2,
+      "retrieved_top_sections": [
+        "AAPL:item_7",
+        "GOOGL:item_8",
+        "AAPL:item_7",
+        "MSFT:item_8",
+        "META:item_7"
+      ]
+    },
+    {
+      "id": "META-020",
+      "query": "What competitive threats did Meta identify in social media and messaging in its FY2024 10-K?",
+      "ticker": "META",
+      "answer_type": "qualitative",
+      "expected_sections": [
+        "item_1a"
+      ],
+      "match_rank": null,
+      "reciprocal_rank": 0.0,
+      "retrieved_top_sections": [
+        "META:item_8",
+        "META:item_1",
+        "META:item_1",
+        "META:item_8",
+        "META:item_1"
+      ]
+    }
+  ]
+}
