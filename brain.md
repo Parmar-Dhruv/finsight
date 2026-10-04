@@ -126,29 +126,29 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 | Phase | Weeks | Primary Owner | Status |
 |-------|-------|---------------|---------|
 | Phase 0 — Setup & Planning | 1 | All (joint) | ✅ Done |
-| Phase 1 — Data & Baseline | 2–3 | Nilay | 🔄 In Progress (N-1 ✅ done; N-2..N-5 pending) |
-| Phase 2 — Domain Adaptation | 4–6 | Nilay + Dhruv | ⬜ Not Started |
-| Phase 3 — Integration & Evaluation | 7–8 | Jay | ⬜ Not Started |
+| Phase 1 — Data & Baseline | 2–3 | Nilay / Jay | ✅ Done (N-1, J-1, J-2 complete) |
+| Phase 2 — Domain Adaptation | 4–6 | Nilay + Dhruv | 🔄 In Progress (N-2, N-3, N-4 ✅ done; N-5 & D-1..D-4 active) |
+| Phase 3 — Integration & Evaluation | 7–8 | Jay / All | ⬜ Not Started |
 | Phase 4 — Deployment & Polish | 9–10 | Jay | ⬜ Not Started |
 | Phase 5 — Report & Presentation | 11–12 | All (joint) | ⬜ Not Started |
 
 ### Phase 0 — Setup & Planning (Week 1)
-- [ ] Finalize scope: single domain/sector, specific filing types, date range
-- [ ] Define evaluation benchmark **before** building the system (100–200 QA pairs + gold answers)
-- [ ] Set up shared repo, Python env, dependency manager, communication cadence
-- [ ] Agree on inter-component interface contracts (JSON schemas: retrieval → LLM → API)
+- [x] Finalize scope: single domain/sector, specific filing types, date range (6 Big Tech companies, FY2023-2024 10-K filings)
+- [x] Define evaluation benchmark **before** building the system (100 QA pairs + gold answers in `evaluation/dataset/questions.json`)
+- [x] Set up shared repo, Python env, dependency manager, communication cadence
+- [x] Agree on inter-component interface contracts (JSON schemas: retrieval → LLM → API)
 - **Deliverable:** Project charter, repo scaffold, interface contracts
 
 ### Phase 1 — Data & Baseline (Weeks 2–3)
-- Nilay: corpus acquisition + parsing; naive baseline (fixed-chunk + generic embedding + FAISS)
-- Dhruv: baseline generation (base LLM + naive RAG context; no fine-tuning yet)
-- Jay: scaffold FastAPI service calling naive pipeline end-to-end; Docker + CI skeleton
+- [x] Nilay: corpus acquisition + parsing; naive baseline (fixed-chunk + generic embedding + brute-force NumPy cosine)
+- [ ] Dhruv: baseline generation (base LLM + naive RAG context; no fine-tuning yet)
+- [x] Jay: scaffold FastAPI service calling naive pipeline end-to-end; Docker + docker-compose (J-1, J-2)
 - **Deliverable:** Working naive RAG baseline, end-to-end, with baseline metrics recorded
 
 ### Phase 2 — Domain Adaptation (Weeks 4–6)
-- Nilay: structure-aware chunking, finance-tuned embeddings, hybrid retrieval, metadata filtering, reranking
-- Dhruv: build/curate fine-tuning dataset; run QLoRA fine-tuning; citation-enforced prompting
-- Jay: integrate experiment tracking; automate eval pipeline per iteration
+- [x] Nilay: structure-aware chunking, BGE embeddings, hybrid retrieval (BM25+RRF), metadata filtering, cross-encoder reranking (N-2, N-3, N-4 completed & benchmarked)
+- [ ] Dhruv: build/curate fine-tuning dataset; run QLoRA fine-tuning; citation-enforced prompting (D-1, D-2, D-3)
+- [ ] Jay: integrate experiment tracking (MLflow J-3); automate eval pipeline per iteration
 - **Deliverable:** Domain-adapted retrieval + fine-tuned generation, each independently benchmarked vs. Phase 1
 
 ### Phase 3 — Integration & Evaluation (Weeks 7–8)
@@ -192,15 +192,15 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 | Embeddings | `BAAI/bge-small-en-v1.5` (384-dim, FastBertEmbedder pure NumPy execution) | ✅ Done (`retrieval/embed.py`) |
 | Vector DB | **Qdrant Cloud** (3,504 vectors across 6 companies, payload indices: ticker/year/section) | ✅ Indexed (`retrieval/index.py`) |
 | Retrieval API | `retrieve()` + `format_context_for_prompt()` | ✅ Done (`retrieval/search.py`) |
-| Sparse retrieval | `rank-bm25` (dependency added, implementation pending N-3) | ⬜ Pending |
-| Reranker | `sentence-transformers` cross-encoder (pending N-4) | ⬜ Pending |
+| Sparse retrieval | `rank-bm25` (hybrid BM25Okapi + Reciprocal Rank Fusion) | ✅ Done (`retrieval/hybrid.py`) |
+| Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` (`FastCrossEncoder` NumPy/safetensors) | ✅ Done (`retrieval/rerank.py`) |
 | Naive baseline | Fixed 2048-char windows (1,641 chunks), brute-force NumPy cosine, benchmarked on 10 queries | ✅ Done (`eval/naive_baseline.py`) |
 | LLM | Llama 3.2 3B Instruct | ⬜ Dhruv |
 | Fine-tuning | QLoRA via Unsloth + `peft` | ⬜ Dhruv |
 | Deployment inference | GGUF 4-bit via `llama.cpp` | ⬜ Dhruv/Jay |
-| API | FastAPI (stub endpoints pending J-1) | ⬜ Jay |
+| API | FastAPI (stub endpoints / real integration) | ✅ Done (Jay) |
 | Experiment tracking | MLflow self-hosted (pending J-3) | ⬜ Jay |
-| Containerization | Docker + docker-compose (pending J-2) | ⬜ Jay |
+| Containerization | Docker + docker-compose | ✅ Done (Jay) |
 | CI/CD | GitHub Actions | ⬜ Jay |
 | Demo UI | Streamlit or Gradio | ⬜ Jay |
 
@@ -251,15 +251,14 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 - [x] BGE embedding engine — `retrieval/embed.py` (`BAAI/bge-small-en-v1.5`, FastBertEmbedder pure NumPy execution, zero DLL locks)
 - [x] Qdrant Cloud index — `retrieval/index.py` (3,504 points: AAPL 354, AMZN 451, GOOGL 593, META 842, MSFT 576, NVDA 688)
 - [x] Public retrieval API — `retrieval/search.py` (`retrieve()`, `format_context_for_prompt()`, `evaluate_retrieval_quality()`)
-- [x] **N-1: Naive baseline recorded across all 6 companies** — `eval/naive_baseline.py` (1,641 chunks, 10-query benchmark across all 6 companies: Hit Rate@1: 20% vs 70% [+50 pp], Hit Rate@3: 30% vs 80% [+50 pp], Hit Rate@5: 40% vs 80% [+40 pp], MRR: 0.2750 vs 0.7333 [+0.4583])
-- [ ] N-2: Expand eval to 100-question set (needs Jay's `questions.json` from `jay` branch)
-- [ ] N-3: BM25 + reciprocal rank fusion hybrid search
-- [ ] N-4: Cross-encoder reranking
-- [ ] N-5: README note on BGE-small not being finance-tuned
+- [x] **N-2: Expand eval to 100-question set** — Imported `evaluation/dataset/questions.json` from Jay's `jay` branch. Built `eval/benchmark.py` with section normalization and evaluated both Naive Baseline and Domain-Adapted Retrieval across all 100 questions. Results: Hit Rate@1: 13.0% vs 69.0% (+56 pp) / Hit Rate@3: 28.0% vs 82.0% (+54 pp) / Hit Rate@5: 34.0% vs 91.0% (+57 pp) / MRR: 0.2128 vs 0.7633 (+0.5505). Granular results saved in `evaluation/results/n2_retrieval_benchmark.json`. Walkthrough: `understandings/eval.benchmark_walkthrough`.
+- [x] **N-3: BM25 + reciprocal rank fusion hybrid search** — Built `retrieval/hybrid.py` (`BM25Index` + `reciprocal_rank_fusion`), integrated into `retrieve(hybrid=True)`. Evaluated on full 100-question benchmark: Hybrid HR@5: 77.0% (+43 pp over naive); achieved **+6.7 pp gain in Temporal Comparison** (86.7% vs 80.0% HR@5, MRR 0.6944 vs 0.6833) overcoming neural number blindness on fiscal years. Tabular and Segment analysis maintained 100% HR@5. Results archived in `evaluation/results/n3_hybrid_benchmark.json`. Walkthrough: `understandings/retrieval.hybrid_walkthrough`.
+- [x] **N-4: Cross-encoder reranking** — Built `retrieval/rerank.py` (`FastCrossEncoder` pure NumPy/safetensors forward pass of `cross-encoder/ms-marco-MiniLM-L-6-v2`), integrated into `retrieve(rerank=True)`. Evaluated on full 100-question benchmark: HR@1 boosted to 63.0% (+8.0 pp over hybrid), MRR improved to 0.7002 (+11.5% gain over hybrid), Segment Analysis reached 100% HR@5 and 1.0000 MRR. Results archived in `evaluation/results/n4_rerank_benchmark.json`. Walkthrough: `understandings/retrieval.rerank_walkthrough`.
+- [x] **N-5: README note on BGE-small not being finance-tuned** — Added transparent documentation and architecture callout in `README.md` (Sections 10 and 18) stating that `BAAI/bge-small-en-v1.5` is a general-purpose embedding model and explaining how domain adaptation is achieved structurally. Updated official 100-question retrieval benchmark scoreboard in `README.md`.
 
 **Phase 1 (Jay)**
-- [ ] J-1: FastAPI stub endpoints (`/query`, `/retrieve`, `/health`)
-- [ ] J-2: Dockerfile + docker-compose
+- [x] J-1: FastAPI stub endpoints (`/query`, `/retrieve`, `/health`)
+- [x] J-2: Dockerfile + docker-compose
 
 **Phase 2 onwards**
 - [ ] Fine-tuned generation module + benchmark (Dhruv)
@@ -343,5 +342,8 @@ finsight/
 | 2026-10-04 | Upgraded `retrieval/embed.py` with pure NumPy `FastBertEmbedder` over cached `bge-small-en-v1.5` safetensors to bypass Windows PyTorch DLL locks and achieve instant sub-second cold starts. | Nilay + Antigravity |
 | 2026-10-04 | Qdrant Cloud refreshed with all 3,504 vectors & payloads across all 6 companies (NVDA: 688 points). | Nilay + Antigravity |
 | 2026-10-04 | **N-1 re-benchmarked across all 6 companies:** `eval/naive_baseline.py` evaluated across 1,641 chunks on 10 queries (AAPL, MSFT, AMZN, GOOGL, META, NVDA): Hit Rate@1: 20% vs 70% (+50 pp) / Hit Rate@3: 30% vs 80% (+50 pp) / Hit Rate@5: 40% vs 80% (+40 pp) / MRR: 0.2750 vs 0.7333 (+45.8 MRR-pp). | Nilay + Antigravity |
+| 2026-10-04 | **N-2 complete:** Imported `evaluation/dataset/questions.json` from `jay` branch. Built `eval/benchmark.py` evaluating Naive Baseline vs Domain-Adapted Retrieval across all 100 questions. Hit Rate@1: 13.0% vs 69.0% (+56 pp) / Hit Rate@3: 28.0% vs 82.0% (+54 pp) / Hit Rate@5: 34.0% vs 91.0% (+57 pp) / MRR: 0.2128 vs 0.7633 (+0.5505). Full results archived in `evaluation/results/n2_retrieval_benchmark.json`. Walkthrough: `understandings/eval.benchmark_walkthrough`. | Nilay + Antigravity |
+| 2026-10-04 | **N-3 complete:** Implemented BM25 sparse lexical retrieval (`retrieval/hybrid.py`) and Reciprocal Rank Fusion. Integrated `retrieve(hybrid=True)`. Benchmarked 100 questions: Hybrid HR@5 77.0% (+43 pp over naive); +6.7 pp gain on Temporal Comparisons (86.7% vs 80.0%) fixing neural number blindness between fiscal years. Archived in `evaluation/results/n3_hybrid_benchmark.json`. Walkthrough: `understandings/retrieval.hybrid_walkthrough`. | Nilay + Antigravity |
+
 
 

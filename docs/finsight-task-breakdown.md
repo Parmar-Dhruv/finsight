@@ -52,11 +52,11 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 
 | Person | Branch | What exists |
 |---|---|---|
-| Nilay | `nilay` | Full retrieval pipeline for all 6 companies (AAPL, MSFT, AMZN, GOOGL, META, NVDA): parsing, structure-aware chunking, BGE embeddings, Qdrant Cloud index (3,504 chunks), metadata filtering, `retrieve()`/`format_context_for_prompt()` API. Naive baseline (N-1) implemented in `eval/naive_baseline.py` and benchmarked across all 6 companies. |
-| Jay | `jay` | A 100-question gold-answer benchmark (`evaluation/dataset/questions.json`) covering all 5 companies, both fiscal years, 6 question types. **No API, Docker, or CI work yet** |
-| Dhruv | `dhruv` | Branch exists, no commits beyond initial scaffold. Nothing started |
+| Nilay | `nilay` | Full retrieval pipeline for all 6 companies (AAPL, MSFT, AMZN, GOOGL, META, NVDA): parsing, structure-aware chunking (3,504 chunks), BGE embeddings, Qdrant Cloud index, metadata filtering, `retrieve()`/`format_context_for_prompt()` API. Evaluated Naive baseline (N-1), 100-question benchmark harness (N-2), BM25 + RRF Hybrid Search (N-3), and Cross-Encoder Reranking (N-4) with full metrics recorded. |
+| Jay | `jay` | A 100-question gold-answer benchmark (`evaluation/dataset/questions.json`) covering 5 companies, both fiscal years, 6 question types. FastAPI service with stub endpoints `/query`, `/retrieve`, `/health` (J-1) and Docker containerization (`Dockerfile` + `docker-compose.yml`) (J-2). |
+| Dhruv | `dhruv` | Fine-tuning dataset preparation (D-1) and prompt template (D-2) in progress; unblocked for QLoRA fine-tuning (D-3) now that N-3 and N-4 retrieval enhancements are finalized. |
 
-**Immediate coordination fix needed:** Nilay's evaluation harness and Jay's 100-question benchmark are not connected. Task N-2 below wires them together — this closes the "eval set too small" gap without anyone having to build a new dataset.
+**Coordination update:** Tasks N-1 through N-4, as well as J-1 and J-2, are completed. Retrieval architecture is locked with comprehensive benchmarks across Naive, Dense, Hybrid, and Cross-Encoder Reranking pipelines. Next up: N-5 (README disclaimer on BGE embeddings) and D-3 (Dhruv's QLoRA training run).
 
 ---
 
@@ -75,18 +75,45 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
   | **MRR** | 0.2750 | **0.7333** | **+0.4583** |
 
 **Jay**
-- **J-1:** Scaffold a FastAPI service with three stub endpoints: `/query`, `/retrieve`, `/health`. They can return hardcoded/mock responses for now — the goal is a running service Dhruv and Nilay can point real logic at later, not full functionality yet.
-- **J-2:** Add a `Dockerfile` and minimal `docker-compose.yml` so the stub API runs in a container.
+- **J-1 (COMPLETED):** Scaffold a FastAPI service with three stub endpoints: `/query`, `/retrieve`, `/health`. They can return hardcoded/mock responses for now — the goal is a running service Dhruv and Nilay can point real logic at later, not full functionality yet.
+- **J-2 (COMPLETED):** Add a `Dockerfile` and minimal `docker-compose.yml` so the stub API runs in a container.
 
 ---
 
 ### Phase 2 — Domain Adaptation *(in progress)*
 
 **Nilay**
-- **N-2:** Import `evaluation/dataset/questions.json` from Jay's `jay` branch. Convert its 100 questions into the query→gold-chunk format your harness expects. Re-run `evaluate_retrieval_quality()` on this expanded set for both the naive baseline (N-1) and the current domain-adapted pipeline. Output: updated before/after table on the full 100-question set.
-- **N-3:** Implement BM25 sparse retrieval over the existing chunk corpus using `rank-bm25` (already a dependency, currently unused). Fuse with dense retrieval scores using reciprocal rank fusion. Re-run evaluation with hybrid search on vs. off.
-- **N-4:** Add a cross-encoder reranking step on top-k candidates before they're returned from `retrieve()`, using `sentence-transformers` (already a dependency). Re-run evaluation with reranking on vs. off.
-- **N-5:** Add one paragraph to the README stating plainly that `BAAI/bge-small-en-v1.5` is a general-purpose embedding model, not a finance-tuned one — so this doesn't silently read as "domain-tuned" to a grader.
+- **N-2 (COMPLETED):** Import `evaluation/dataset/questions.json` from Jay's `jay` branch. Convert its 100 questions into the query→gold-chunk format your harness expects. Re-run `evaluate_retrieval_quality()` on this expanded set for both the naive baseline (N-1) and the current domain-adapted pipeline (`eval/benchmark.py`). Output recorded below:
+
+  | Metric | Naive Baseline (100 Qs) | Domain-Adapted (100 Qs) | Delta |
+  |---|---|---|---|
+  | **Hit Rate @ 1** | 13.0% | **69.0%** | **+56.0 pp** |
+  | **Hit Rate @ 3** | 28.0% | **82.0%** | **+54.0 pp** |
+  | **Hit Rate @ 5** | 34.0% | **91.0%** | **+57.0 pp** |
+  | **MRR** | 0.2128 | **0.7633** | **+0.5505** |
+
+  *Breakdown by question type (Domain-Adapted HR@5):* `tabular` (100.0%), `segment_analysis` (100.0%), `numeric_reasoning` (92.9%), `numeric_extraction` (91.8%), `qualitative` (88.9%), `temporal_comparison` (80.0%). Detailed results archived in `evaluation/results/n2_retrieval_benchmark.json`.
+- **N-3 (COMPLETED):** Implement BM25 sparse retrieval over the existing chunk corpus using `rank-bm25` (`retrieval/hybrid.py`). Fuse with dense retrieval scores using reciprocal rank fusion (RRF). Re-ran evaluation on the full 100-question benchmark with hybrid search on vs. off (`eval/benchmark.py`). Output recorded below:
+
+  | Metric | Naive Baseline (100 Qs) | Dense-Only (100 Qs) | Hybrid (Dense+BM25) | Delta vs Naive |
+  |---|---|---|---|---|
+  | **Hit Rate @ 1** | 13.0% | **69.0%** | 55.0% | **+42.0 pp** |
+  | **Hit Rate @ 3** | 28.0% | **82.0%** | 68.0% | **+40.0 pp** |
+  | **Hit Rate @ 5** | 34.0% | **91.0%** | 77.0% | **+43.0 pp** |
+  | **MRR** | 0.2128 | **0.7633** | 0.6277 | **+0.4148** |
+
+  *Key Empirical Insight:* Hybrid retrieval yielded a **+6.7 pp gain in Temporal Comparison queries** (86.7% vs 80.0% HR@5, MRR 0.6944 vs 0.6833), where BM25 exact-token matching eliminated "number blindness" between FY2023 and FY2024. Tabular and Segment Analysis maintained **100% HR@5**. For broad questions, dense vector search remained superior due to financial term repetition across 10-K boilerplate. Detailed results archived in `evaluation/results/n3_hybrid_benchmark.json`.
+- **N-4 (COMPLETED):** Implemented cross-encoder reranking over top candidates retrieved by `retrieve()`, using `cross-encoder/ms-marco-MiniLM-L-6-v2` (`retrieval/rerank.py` via `FastCrossEncoder` pure NumPy / safetensors execution). Integrated `rerank=True` option into `retrieve()`. Re-ran evaluation on the full 100-question benchmark (`eval/benchmark.py`) comparing Naive Baseline, Dense-Only, Hybrid (N-3), and Hybrid+Rerank (N-4). Output recorded below:
+
+  | Metric | Naive Baseline | Dense-Only | Hybrid (Dense+BM25) | Hybrid + Rerank (N-4) | Delta vs Naive |
+  |---|---|---|---|---|---|
+  | **Hit Rate @ 1** | 13.0% | 69.0% | 55.0% | **63.0%** | **+50.0 pp** |
+  | **Hit Rate @ 3** | 28.0% | 82.0% | 68.0% | **77.0%** | **+49.0 pp** |
+  | **Hit Rate @ 5** | 34.0% | 91.0% | 77.0% | **81.0%** | **+47.0 pp** |
+  | **MRR** | 0.2128 | 0.7633 | 0.6277 | **0.7002** | **+0.4873** |
+
+  *Key Empirical Insight:* Cross-encoder reranking boosted top-1 precision significantly over standard hybrid search (**+8.0 pp Hit Rate @ 1**, from 55.0% to 63.0%, and **+0.0725 MRR**, from 0.6277 to 0.7002). Joint query-document cross-attention effectively re-ranked true answers from positions #3-#5 to position #1. Achieved **100.0% HR@5 and 1.0000 MRR on Segment Analysis**. Results archived in `evaluation/results/n4_rerank_benchmark.json`. Walkthrough: `understandings/retrieval.rerank_walkthrough`.
+- **N-5 (COMPLETED):** Added explicit architectural notes and disclaimers to `README.md` (Sections 10 and 18) stating plainly that `BAAI/bge-small-en-v1.5` is a general-purpose embedding model rather than a finance-pretrained embedding model, and clearly articulating that FinSight's domain adaptation is implemented at the system level (10-K table-to-markdown parsing, SEC Item metadata filtering, BM25 exact lexical matching for fiscal years/numbers, and cross-encoder reranking). Also updated the official 100-question retrieval benchmark scoreboard and system limitations in `README.md`.
 
 **Dhruv (you)**
 - **D-1:** Build the fine-tuning QA dataset from the same 5-company corpus Nilay indexed. **Do not reuse any of Jay's 100 benchmark questions as training data** — they must stay held out for evaluation, or your eval numbers will be inflated by data leakage.
