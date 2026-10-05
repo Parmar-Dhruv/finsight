@@ -4,6 +4,7 @@
 !docs/*.md
 !brain.md
 !evaluation/dataset/README.md
+!MASTER_PROMPT.md
 
 understandings/
 understanding/
@@ -80,8 +81,17 @@ embeddings/
 experiments/
 
 # ===========================
+# Generation Layer Outputs (D-1)
+# ===========================
+generation/data/
+
+# ===========================
 # Financial QA Dataset
 # ===========================
+# The downloaded fine-tuning corpus is large; fetch it on demand via
+# scripts/download_virattt_dataset.py instead of committing it.
+evaluation/dataset/financial_qa_10k.json
+evaluation/dataset/financial_qa_10k.jsonl
 !evaluation/dataset/questions.json
 
 # ===========================

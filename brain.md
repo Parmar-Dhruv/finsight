@@ -127,7 +127,7 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 |-------|-------|---------------|---------|
 | Phase 0 — Setup & Planning | 1 | All (joint) | ✅ Done |
 | Phase 1 — Data & Baseline | 2–3 | Nilay / Jay | ✅ Done (N-1, J-1, J-2 complete) |
-| Phase 2 — Domain Adaptation | 4–6 | Nilay + Dhruv | 🔄 In Progress (N-2, N-3, N-4 ✅ done; N-5 & D-1..D-4 active) |
+| Phase 2 — Domain Adaptation | 4–6 | Nilay + Dhruv | 🔄 In Progress (N-2..N-5 ✅ done; D-1..D-4 harnesses ✅ done; D-3 training run pending free-tier T4) |
 | Phase 3 — Integration & Evaluation | 7–8 | Jay / All | ⬜ Not Started |
 | Phase 4 — Deployment & Polish | 9–10 | Jay | ⬜ Not Started |
 | Phase 5 — Report & Presentation | 11–12 | All (joint) | ⬜ Not Started |
@@ -146,8 +146,10 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 - **Deliverable:** Working naive RAG baseline, end-to-end, with baseline metrics recorded
 
 ### Phase 2 — Domain Adaptation (Weeks 4–6)
-- [x] Nilay: structure-aware chunking, BGE embeddings, hybrid retrieval (BM25+RRF), metadata filtering, cross-encoder reranking (N-2, N-3, N-4 completed & benchmarked)
-- [ ] Dhruv: build/curate fine-tuning dataset; run QLoRA fine-tuning; citation-enforced prompting (D-1, D-2, D-3)
+- [x] Nilay: structure-aware chunking, BGE embeddings, hybrid retrieval (BM25+RRF), metadata filtering, cross-encoder reranking, BGE transparency note (N-2..N-5 completed & benchmarked)
+- [x] Dhruv: build/curate fine-tuning dataset (D-1 ✅); citation-enforced prompting + refusal template (D-2 ✅)
+- [x] Dhruv: QLoRA training harness (D-3 ✅ `generation/train_lora.py`); GGUF merge+export harness (D-4 ✅ `generation/quantize_gguf.py`)
+- [ ] Dhruv: **run** D-3 training on free-tier T4, then D-4 export (pending compute)
 - [ ] Jay: integrate experiment tracking (MLflow J-3); automate eval pipeline per iteration
 - **Deliverable:** Domain-adapted retrieval + fine-tuned generation, each independently benchmarked vs. Phase 1
 
@@ -195,14 +197,16 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 | Sparse retrieval | `rank-bm25` (hybrid BM25Okapi + Reciprocal Rank Fusion) | ✅ Done (`retrieval/hybrid.py`) |
 | Reranker | `cross-encoder/ms-marco-MiniLM-L-6-v2` (`FastCrossEncoder` NumPy/safetensors) | ✅ Done (`retrieval/rerank.py`) |
 | Naive baseline | Fixed 2048-char windows (1,641 chunks), brute-force NumPy cosine, benchmarked on 10 queries | ✅ Done (`eval/naive_baseline.py`) |
+| LLM prompt layer | `generation/prompt_templates.py` (citation-enforced + refusal, Llama 3.2 chat format) | ✅ Done (`generation/`) |
+| Fine-tuning dataset | `generation/build_finetune_dataset.py` (virattt/financial-qa-10K primary + synthetic fallback, leak-guarded) | ✅ Done (`generation/`) |
 | LLM | Llama 3.2 3B Instruct | ⬜ Dhruv |
-| Fine-tuning | QLoRA via Unsloth + `peft` | ⬜ Dhruv |
-| Deployment inference | GGUF 4-bit via `llama.cpp` | ⬜ Dhruv/Jay |
+| Fine-tuning | QLoRA via Unsloth + `peft` | ✅ Script ready (`generation/train_lora.py`); ⬜ training run pending T4 |
+| Deployment inference | GGUF 4-bit via `llama.cpp` | ✅ Script ready (`generation/quantize_gguf.py`); ⬜ export pending adapter |
 | API | FastAPI (stub endpoints / real integration) | ✅ Done (Jay) |
 | Experiment tracking | MLflow self-hosted (pending J-3) | ⬜ Jay |
 | Containerization | Docker + docker-compose | ✅ Done (Jay) |
 | CI/CD | GitHub Actions | ⬜ Jay |
-| Demo UI | Streamlit or Gradio | ⬜ Jay |
+| Demo UI | Minimal Streamlit test UI (`demo/app.py`) | ✅ Base test UI (frontend base) |
 
 ---
 
@@ -261,6 +265,12 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 - [x] J-2: Dockerfile + docker-compose
 
 **Phase 2 onwards**
+- [x] **D-1:** Fine-tuning dataset builder — `generation/build_finetune_dataset.py` (virattt/financial-qa-10K primary + synthetic corpus fallback; 6-ticker/FY23-24 filter; benchmark leak guard; deterministic train/val split + manifest)
+- [x] **D-2:** Citation-enforced prompt templates — `generation/prompt_templates.py` (Llama 3.2 chat format, `[SOURCE N]` enforcement, explicit refusal, shared source-header contract)
+- [x] **D-3:** QLoRA training harness — `generation/train_lora.py` (Unsloth primary + transformers/peft fallback, 4-bit, dry-run mode, run-config logging)
+- [x] **D-4:** GGUF export harness — `generation/quantize_gguf.py` (LoRA merge + llama.cpp f16→Q4_K_M, dry-run mode)
+- [ ] **D-3 run:** Execute QLoRA fine-tuning on free-tier T4 (record config/metrics)
+- [ ] **D-4 run:** Merge + export GGUF Q4_K_M after adapter exists
 - [ ] Fine-tuned generation module + benchmark (Dhruv)
 - [ ] Full integrated system + comparative evaluation matrix (Phase 3)
 - [ ] Error analysis report (Phase 3)
@@ -344,6 +354,10 @@ finsight/
 | 2026-10-04 | **N-1 re-benchmarked across all 6 companies:** `eval/naive_baseline.py` evaluated across 1,641 chunks on 10 queries (AAPL, MSFT, AMZN, GOOGL, META, NVDA): Hit Rate@1: 20% vs 70% (+50 pp) / Hit Rate@3: 30% vs 80% (+50 pp) / Hit Rate@5: 40% vs 80% (+40 pp) / MRR: 0.2750 vs 0.7333 (+45.8 MRR-pp). | Nilay + Antigravity |
 | 2026-10-04 | **N-2 complete:** Imported `evaluation/dataset/questions.json` from `jay` branch. Built `eval/benchmark.py` evaluating Naive Baseline vs Domain-Adapted Retrieval across all 100 questions. Hit Rate@1: 13.0% vs 69.0% (+56 pp) / Hit Rate@3: 28.0% vs 82.0% (+54 pp) / Hit Rate@5: 34.0% vs 91.0% (+57 pp) / MRR: 0.2128 vs 0.7633 (+0.5505). Full results archived in `evaluation/results/n2_retrieval_benchmark.json`. Walkthrough: `understandings/eval.benchmark_walkthrough`. | Nilay + Antigravity |
 | 2026-10-04 | **N-3 complete:** Implemented BM25 sparse lexical retrieval (`retrieval/hybrid.py`) and Reciprocal Rank Fusion. Integrated `retrieve(hybrid=True)`. Benchmarked 100 questions: Hybrid HR@5 77.0% (+43 pp over naive); +6.7 pp gain on Temporal Comparisons (86.7% vs 80.0%) fixing neural number blindness between fiscal years. Archived in `evaluation/results/n3_hybrid_benchmark.json`. Walkthrough: `understandings/retrieval.hybrid_walkthrough`. | Nilay + Antigravity |
+| 2026-10-05 | **D-2 complete:** Added `generation/prompt_templates.py` — Llama 3.2 Instruct chat rendering, citation-enforced system prompt (`[SOURCE N]`), explicit low-confidence refusal, and a canonical `[SOURCE N | TICKER FYyyyy section | Score]` formatter kept in sync with `retrieval.search.format_context_for_prompt()`. | Dhruv |
+| 2026-10-05 | **D-1 complete:** Added `generation/build_finetune_dataset.py` — virattt/financial-qa-10K primary source with synthetic extractive-QA fallback from the indexed corpus; filters to the 6 ratified tickers and FY2023/FY2024; de-leaks against the 100-question benchmark (exact + token-Jaccard); renders chat training examples; deterministic 95/5 train/val split + `manifest.json`. Fixed `scripts/download_virattt_dataset.py` to stop deleting `questions.json` (the eval benchmark) and exposed `download_dataset()`. Added `tests/` suite. | Dhruv |
+| 2026-10-05 | **D-3/D-4 harnesses complete:** Added `generation/train_lora.py` (QLoRA via Unsloth with transformers+peft fallback, 4-bit, `--dry-run`, run-config export) and `generation/quantize_gguf.py` (LoRA merge + llama.cpp f16→Q4_K_M, `--dry-run`/`--merge-only`). Both validated via dry-run; 40 unit tests passing. Actual training/export runs pending free-tier T4 compute. | Dhruv |
+| 2026-10-05 | **Repo hygiene + base UI:** Added `LICENSE` (MIT), GitHub Actions CI (`.github/workflows/ci.yml` — unit tests + byte-compile), minimal Streamlit test UI (`demo/app.py`), `tests/` suite + `conftest.py`, and `MASTER_PROMPT.md` runbook for the GPU execution handoff. Aligned README to the 6-company corpus scope and corrected stale paths/vector counts in `docs/HANDOFF_DHRUV.md`. | Dhruv |
 
 
 

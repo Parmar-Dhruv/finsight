@@ -1,3 +1,4 @@
+
 # FinSight — Problem Statement & Phase Task Breakdown
 
 **Team:** Nilay (Vector DB & Retrieval) · Dhruv (LLM Integration & Fine-tuning) · Jay (Deployment & MLOps)
@@ -54,9 +55,9 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 |---|---|---|
 | Nilay | `nilay` | Full retrieval pipeline for all 6 companies (AAPL, MSFT, AMZN, GOOGL, META, NVDA): parsing, structure-aware chunking (3,504 chunks), BGE embeddings, Qdrant Cloud index, metadata filtering, `retrieve()`/`format_context_for_prompt()` API. Evaluated Naive baseline (N-1), 100-question benchmark harness (N-2), BM25 + RRF Hybrid Search (N-3), and Cross-Encoder Reranking (N-4) with full metrics recorded. |
 | Jay | `jay` | A 100-question gold-answer benchmark (`evaluation/dataset/questions.json`) covering 5 companies, both fiscal years, 6 question types. FastAPI service with stub endpoints `/query`, `/retrieve`, `/health` (J-1) and Docker containerization (`Dockerfile` + `docker-compose.yml`) (J-2). |
-| Dhruv | `dhruv` | Fine-tuning dataset preparation (D-1) and prompt template (D-2) in progress; unblocked for QLoRA fine-tuning (D-3) now that N-3 and N-4 retrieval enhancements are finalized. |
+| Dhruv | `dhruv` | Generation layer complete as harnesses: dataset builder (D-1), citation-enforced prompt templates (D-2), QLoRA training harness (D-3), and GGUF export harness (D-4) all in `generation/`, with unit tests (40 passing). Remaining: **execute** D-3 on free-tier T4, then D-4 export. |
 
-**Coordination update:** Tasks N-1 through N-4, as well as J-1 and J-2, are completed. Retrieval architecture is locked with comprehensive benchmarks across Naive, Dense, Hybrid, and Cross-Encoder Reranking pipelines. Next up: N-5 (README disclaimer on BGE embeddings) and D-3 (Dhruv's QLoRA training run).
+**Coordination update:** Tasks N-1 through N-5, J-1, J-2, and D-1 through D-4 (harnesses) are completed. Retrieval architecture is locked with comprehensive benchmarks across Naive, Dense, Hybrid, and Cross-Encoder Reranking pipelines. The full generation layer now exists in `generation/` (dataset builder, prompt templates, QLoRA training, GGUF export). Next up: **execute** D-3 training on a free-tier T4, then D-4 export; in parallel Jay can proceed with J-3 (MLflow) against the locked retrieval harness.
 
 ---
 
@@ -116,11 +117,10 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 - **N-5 (COMPLETED):** Added explicit architectural notes and disclaimers to `README.md` (Sections 10 and 18) stating plainly that `BAAI/bge-small-en-v1.5` is a general-purpose embedding model rather than a finance-pretrained embedding model, and clearly articulating that FinSight's domain adaptation is implemented at the system level (10-K table-to-markdown parsing, SEC Item metadata filtering, BM25 exact lexical matching for fiscal years/numbers, and cross-encoder reranking). Also updated the official 100-question retrieval benchmark scoreboard and system limitations in `README.md`.
 
 **Dhruv (you)**
-- **D-1:** Build the fine-tuning QA dataset from the same 5-company corpus Nilay indexed. **Do not reuse any of Jay's 100 benchmark questions as training data** — they must stay held out for evaluation, or your eval numbers will be inflated by data leakage.
-- **D-2:** Write the citation-enforced prompt template, using the `[SOURCE N | TICKER FYyyyy section | Score]` format already produced by `format_context_for_prompt()`. Include an explicit refusal/low-confidence instruction for when retrieved context doesn't support an answer.
-- **D-3:** Run QLoRA fine-tuning via Unsloth on Llama 3.2 3B Instruct, free-tier Colab/Kaggle T4. Record the training config (rank, alpha, learning rate, steps) for the report.
-  - **Hold this task until N-3 and N-4 are done** — training against retrieval behavior that's about to change wastes your compute budget.
-- **D-4:** Quantize the fine-tuned model to GGUF (4-bit) via `llama.cpp`. Confirm the output format with Jay before handoff.
+- **D-1 (COMPLETED):** Built `generation/build_finetune_dataset.py`. Primary source is `virattt/financial-qa-10K` (`scripts/download_virattt_dataset.py`, now fixed so it no longer deletes the eval benchmark `questions.json`), with a synthetic extractive-QA fallback from `data/processed/chunks.json`. Filters to the 6 ratified tickers and FY2023/FY2024, **de-leaks against Jay's 100-question benchmark** via exact-match + token-Jaccard similarity, renders citation-enforced Llama 3.2 chat examples, and writes a deterministic 95/5 train/val split plus `manifest.json` to `generation/data/`. Covered by `tests/test_build_finetune_dataset.py`.
+- **D-2 (COMPLETED):** Built `generation/prompt_templates.py`. Llama 3.2 Instruct chat rendering with a citation-enforced system prompt (every claim tagged `[SOURCE N]`), an explicit low-confidence refusal message, and a canonical `[SOURCE N | TICKER FYyyyy section | Score]` formatter kept in sync with `retrieval.search.format_context_for_prompt()`. Pure/import-light so it is unit-testable without a GPU or vector DB. Covered by `tests/test_prompt_templates.py`.
+- **D-3 (HARNESS COMPLETE; RUN PENDING):** Built `generation/train_lora.py` — QLoRA fine-tuning of Llama 3.2 3B Instruct with Unsloth as the primary backend and a transformers + `peft` + `trl` SFTTrainer fallback. 4-bit base weights, configurable rank/alpha/dropout/lr/epochs, `--dry-run` validation mode, and automatic run-config logging to `generation/checkpoints/train_run_config.json` (the rank/alpha/lr/steps record required for the report). Remaining: **execute** on free-tier Colab/Kaggle T4 once the D-1 dataset is populated. Covered by `tests/test_train_lora.py`.
+- **D-4 (HARNESS COMPLETE; RUN PENDING):** Built `generation/quantize_gguf.py` — merges the D-3 LoRA adapter into the base model (`merge_and_unload`), then drives llama.cpp's `convert_hf_to_gguf.py` (f16) and `llama-quantize` (Q4_K_M), with `--dry-run` and `--merge-only` modes and tool auto-discovery under `--llama-cpp-dir`. Remaining: run after the adapter exists and confirm the GGUF format with Jay. Covered by `tests/test_quantize_gguf.py`.
 
 **Jay**
 - **J-3:** Wire experiment tracking (MLflow, self-hosted and free) into Nilay's evaluation harness so each of N-2 through N-4's runs gets logged automatically instead of printed to console only.

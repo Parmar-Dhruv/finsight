@@ -1,0 +1,21 @@
+# ─── Dhruv — Generation & Fine-Tuning Layer ───────────────────────────────────
+# Dependencies for D-1 (dataset build), D-2 (prompting), and the upcoming
+# D-3 (QLoRA fine-tuning) / D-4 (GGUF quantization) tasks.
+#
+# NOTE: QLoRA training (D-3) is intended to run on free-tier Colab/Kaggle (T4).
+# On those hosts, install `unsloth` via its own pinned instructions first; it
+# vendors compatible versions of torch/transformers/peft/trl/bitsandbytes.
+
+# ─── Dataset construction (D-1) ───────────────────────────────────────────────
+datasets               # Load virattt/financial-qa-10K from Hugging Face
+
+# ─── Model, tokenizer & PEFT (D-2/D-3) ────────────────────────────────────────
+transformers           # Llama 3.2 3B Instruct + tokenizer
+peft                   # LoRA adapters
+trl                    # SFTTrainer for instruction tuning
+accelerate             # Device placement / mixed precision
+bitsandbytes           # 4-bit quantized base weights (QLoRA)
+safetensors            # Adapter + sharded weight serialization
+
+# ─── Quantization (D-4) ───────────────────────────────────────────────────────
+# GGUF export is done via llama.cpp (built separately), not a pip dependency.
