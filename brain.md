@@ -199,9 +199,9 @@ These are fixed. Not up for debate mid-project to avoid scope drift and hardware
 | Naive baseline | Fixed 2048-char windows (1,641 chunks), brute-force NumPy cosine, benchmarked on 10 queries | ✅ Done (`eval/naive_baseline.py`) |
 | LLM prompt layer | `generation/prompt_templates.py` (citation-enforced + refusal, Llama 3.2 chat format) | ✅ Done (`generation/`) |
 | Fine-tuning dataset | `generation/build_finetune_dataset.py` (virattt/financial-qa-10K primary + synthetic fallback, leak-guarded) | ✅ Done (`generation/`) |
-| LLM | Llama 3.2 3B Instruct | ⬜ Dhruv |
-| Fine-tuning | QLoRA via Unsloth + `peft` | ✅ Script ready (`generation/train_lora.py`); ⬜ training run pending T4 |
-| Deployment inference | GGUF 4-bit via `llama.cpp` | ✅ Script ready (`generation/quantize_gguf.py`); ⬜ export pending adapter |
+| LLM | Llama 3.2 3B Instruct | ✅ Locked (`unsloth/Llama-3.2-3B-Instruct`) |
+| Fine-tuning | QLoRA via Unsloth + `peft` | ✅ Trained on Colab T4 (rank 16, alpha 32, lr 2e-4, 71 steps, final eval loss 0.4136); adapter saved at `generation/checkpoints/lora_adapter` |
+| Deployment inference | GGUF 4-bit via `llama.cpp` | ✅ Script ready (`generation/quantize_gguf.py`); adapter ready |
 | API | FastAPI (stub endpoints / real integration) | ✅ Done (Jay) |
 | Experiment tracking | MLflow self-hosted (pending J-3) | ⬜ Jay |
 | Containerization | Docker + docker-compose | ✅ Done (Jay) |
@@ -358,6 +358,7 @@ finsight/
 | 2026-10-05 | **D-1 complete:** Added `generation/build_finetune_dataset.py` — virattt/financial-qa-10K primary source with synthetic extractive-QA fallback from the indexed corpus; filters to the 6 ratified tickers and FY2023/FY2024; de-leaks against the 100-question benchmark (exact + token-Jaccard); renders chat training examples; deterministic 95/5 train/val split + `manifest.json`. Fixed `scripts/download_virattt_dataset.py` to stop deleting `questions.json` (the eval benchmark) and exposed `download_dataset()`. Added `tests/` suite. | Dhruv |
 | 2026-10-05 | **D-3/D-4 harnesses complete:** Added `generation/train_lora.py` (QLoRA via Unsloth with transformers+peft fallback, 4-bit, `--dry-run`, run-config export) and `generation/quantize_gguf.py` (LoRA merge + llama.cpp f16→Q4_K_M, `--dry-run`/`--merge-only`). Both validated via dry-run; 40 unit tests passing. Actual training/export runs pending free-tier T4 compute. | Dhruv |
 | 2026-10-05 | **Repo hygiene + base UI:** Added `LICENSE` (MIT), GitHub Actions CI (`.github/workflows/ci.yml` — unit tests + byte-compile), minimal Streamlit test UI (`demo/app.py`), `tests/` suite + `conftest.py`, and `MASTER_PROMPT.md` runbook for the GPU execution handoff. Aligned README to the 6-company corpus scope and corrected stale paths/vector counts in `docs/HANDOFF_DHRUV.md`. | Dhruv |
+| 2026-10-05 | **D-3 QLoRA fine-tuning run completed:** Trained Llama 3.2 3B Instruct on Colab Tesla T4 GPU via Unsloth (r=16, alpha=32, lr=2e-4, 1 epoch, 71 steps, batch size 2 x 4 grad accum = 8, 24.3M trainable params). Final training loss dropped from 2.3516 to 0.4042; validation eval_loss reached 0.4136. Trained LoRA adapter extracted and placed at `generation/checkpoints/lora_adapter/`. All 40 unit tests passing. | Dhruv + Nilay |
 
 
 
