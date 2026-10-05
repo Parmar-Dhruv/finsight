@@ -1,0 +1,4 @@
+# Minimal test UI dependencies.
+# The retrieval layer's runtime dependencies are reused from the project root.
+streamlit>=1.30.0
+-r ../requirements.txt

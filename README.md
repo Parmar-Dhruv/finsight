@@ -16,7 +16,7 @@
 **FinSight** is a domain-specialized question-answering system designed to extract accurate, citation-grounded insights from complex SEC Form 10-K annual reports. Unlike generic chatbots, FinSight couples structure-preserving financial document parsing with dense vector indexing and strict attribution prompting to eliminate hallucinations and preserve numerical integrity across public corporate disclosures.
 
 * **Target Sector:** US Public Technology
-* **Coverage:** Apple (`AAPL`), Microsoft (`MSFT`), Amazon (`AMZN`), Alphabet (`GOOGL`), and Meta (`META`)
+* **Coverage:** Apple (`AAPL`), Microsoft (`MSFT`), Amazon (`AMZN`), Alphabet (`GOOGL`), Meta (`META`), and NVIDIA (`NVDA`)
 * **Time Horizon:** Fiscal Years 2023 and 2024
 
 ---
@@ -111,22 +111,42 @@ finsight/
 ├── data/
 │   ├── raw/                  # Downloaded SEC EDGAR 10-K HTML filings
 │   └── processed/            # Parsed section JSONs, chunks.json, embeddings.npy
-├── retrieval/                # Vector Database & Retrieval Engine
+├── retrieval/                # Vector Database & Retrieval Engine (Nilay)
+│   ├── download.py           # SEC EDGAR 10-K downloader
 │   ├── parse.py              # HTML cleaning & table-to-markdown extraction
 │   ├── chunk.py              # Recursive structure-preserving chunker
-│   ├── embed.py              # Dense vector embedding generator
+│   ├── embed.py              # Dense vector embedding generator (pure NumPy)
 │   ├── index.py              # Qdrant client manager (Cloud + Local)
+│   ├── hybrid.py             # BM25 sparse index + reciprocal rank fusion
+│   ├── rerank.py             # Cross-encoder reranker (pure NumPy)
 │   └── search.py             # Public retrieve() API & context formatter
-├── generation/               # LLM Generation & Fine-Tuning
-│   ├── prompt_templates.py   # Citation-enforcing prompt templates
-│   └── train_lora.py         # QLoRA fine-tuning scripts
-├── api/                      # REST Service & Serving
-│   └── main.py               # FastAPI application endpoints
-├── eval/                     # Evaluation & Benchmarks
-│   └── benchmark/            # Curated financial QA evaluation sets
+├── generation/               # LLM Generation & Fine-Tuning (Dhruv)
+│   ├── prompt_templates.py   # Citation-enforcing prompt templates (D-2)
+│   ├── build_finetune_dataset.py  # QLoRA dataset builder (D-1)
+│   ├── train_lora.py         # QLoRA fine-tuning harness (D-3)
+│   └── quantize_gguf.py      # LoRA merge + GGUF export harness (D-4)
+├── api/                      # REST Service & Serving (Jay)
+│   ├── main.py               # FastAPI application endpoints
+│   ├── Dockerfile
+│   └── requirements.txt
+├── demo/                     # Minimal Streamlit test UI (frontend base)
+│   ├── app.py
+│   └── requirements.txt
+├── eval/                     # Retrieval evaluation harness
+│   ├── benchmark.py          # 100-question IR benchmark
+│   └── naive_baseline.py     # N-1 naive baseline pipeline
+├── evaluation/               # Shared evaluation assets
+│   ├── dataset/              # 100-question gold benchmark (questions.json)
+│   └── results/              # Archived benchmark result JSONs
+├── tests/                    # Unit tests (pure logic, CI-ready)
+├── scripts/                  # Dataset acquisition utilities
+├── docs/                     # Handoff contracts & task breakdown
+├── .github/workflows/        # CI (unit tests + byte-compile)
+├── conftest.py               # Pytest path bootstrap
+├── docker-compose.yml
 ├── .env.example              # Template for required environment variables
-├── requirements.txt          # Python dependency specifications
-└── README.md                 # Project documentation
+├── requirements.txt          # Retrieval-layer dependency specifications
+└── README.md
 ```
 
 ---
@@ -141,6 +161,7 @@ finsight/
   * Amazon.com, Inc. (`AMZN`)
   * Alphabet Inc. (`GOOGL`)
   * Meta Platforms, Inc. (`META`)
+  * NVIDIA Corporation (`NVDA`)
 * **Extracted Sections:**
   * **Item 1:** Business Overview
   * **Item 1A:** Risk Factors
@@ -243,6 +264,18 @@ Run the verification script to confirm embedding initialization and vector searc
 python retrieval/search.py
 ```
 
+### Minimal Test UI (Streamlit)
+A lightweight interface to exercise the real retrieval pipeline end-to-end
+(query + `ticker` / `fiscal_year` / `section` filters, hybrid/rerank toggles,
+retrieved passages with scores, and the attributed LLM context block):
+
+```bash
+pip install -r demo/requirements.txt
+streamlit run demo/app.py
+```
+
+This is intentionally a base for testing; the full frontend is a later phase.
+
 ### Rebuilding Ingestion from Scratch *(Optional)*
 ```bash
 python retrieval/parse.py   # Parse raw filings
@@ -300,6 +333,8 @@ context_block = format_context_for_prompt(chunks, max_tokens=1000)
 
 Evaluated against the official **100-question financial benchmark** across 5 companies (`AAPL`, `MSFT`, `AMZN`, `GOOGL`, `META`) and 6 question types (`numeric_extraction`, `numeric_reasoning`, `temporal_comparison`, `segment_analysis`, `tabular`, `qualitative`):
 
+> **Scope note:** the corpus is indexed for **6 companies** (the five above plus `NVDA`); NVIDIA is **not** part of the 100-question benchmark set, so its questions are excluded from the retrieval scores below.
+
 | Retrieval Strategy | Hit Rate @ 1 | Hit Rate @ 3 | Hit Rate @ 5 | MRR | Delta vs. Naive Baseline |
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **Naive Baseline** (Fixed 2048-char chunks, brute-force cosine) | 13.0% | 28.0% | 34.0% | 0.2128 | — |
@@ -327,7 +362,7 @@ Evaluated against the official **100-question financial benchmark** across 5 com
 
 * **Structured Financial Table Extraction:** Integrating vision/table-transformer models for complex multi-level nested financial tables.
 * **Continuous SEC EDGAR Ingestion:** Automated webhook ingestion pipeline for freshly filed Form 10-K and 10-Q disclosures.
-* **Interactive Frontend:** Deploying an attributed Streamlit/Gradio web dashboard with interactive PDF citation highlights.
+* **Full Frontend:** Expanding the minimal Streamlit test UI (`demo/app.py`) into a production dashboard with attributed answers, citation highlights, and live fine-tuned-model (GGUF) inference.
 
 ---
 

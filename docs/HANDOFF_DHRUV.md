@@ -54,7 +54,7 @@ query = "What were Apple's total annual revenues and iPhone sales in 2024?"
 chunks = retrieve(
     query=query,
     k=3,                   # Number of passages to return (default: 5)
-    ticker="AAPL",         # Optional filter: 'AAPL', 'MSFT', 'AMZN', 'META', 'GOOGL'
+    ticker="AAPL",         # Optional filter: 'AAPL', 'MSFT', 'AMZN', 'META', 'GOOGL', 'NVDA'
     fiscal_year=2024,      # Optional filter: 2024, 2023
     section="item_7",      # Optional filter: 'item_7' (MD&A), 'item_1a' (Risks), 'item_8' (Financials)
 )
@@ -95,7 +95,7 @@ def retrieve(
 #### Parameters:
 * **`query`** *(str, required)*: The natural language search question.
 * **`k`** *(int, optional)*: Number of nearest neighbor chunks to return (default `5`).
-* **`ticker`** *(str, optional)*: Filter by company ticker symbol (`'AAPL'`, `'MSFT'`, `'AMZN'`, `'META'`, `'GOOGL'`). Case-insensitive.
+* **`ticker`** *(str, optional)*: Filter by company ticker symbol (`'AAPL'`, `'MSFT'`, `'AMZN'`, `'META'`, `'GOOGL'`, `'NVDA'`). Case-insensitive.
 * **`fiscal_year`** *(int, optional)*: Filter by fiscal year (`2024` or `2023`).
 * **`section`** *(str, optional)*: Filter by 10-K section (`'item_1'`, `'item_1a'`, `'item_7'`, `'item_8'`).
 
@@ -153,7 +153,7 @@ The retrieval engine automatically supports two execution modes:
 
 2. **Qdrant Cloud Mode (Optional)**:
    - If you set `QDRANT_URL` and `QDRANT_API_KEY` in your `.env` file, the retriever will automatically query our shared live AWS cluster in `us-east-2`.
-   - All 2,816 vectors are already synced to the cloud.
+   - All 3,504 vectors (6 companies, FY2023 + FY2024) are already synced to the cloud.
 
 ---
 
