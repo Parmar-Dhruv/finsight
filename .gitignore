@@ -4,7 +4,6 @@
 !docs/*.md
 !brain.md
 !evaluation/dataset/README.md
-!MASTER_PROMPT.md
 
 understandings/
 understanding/
