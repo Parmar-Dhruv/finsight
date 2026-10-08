@@ -26,3 +26,9 @@ rank-bm25              # BM25 keyword search — exact numeric/ticker matching
 
 # ─── Retrieval Evaluation (eval/) ─────────────────────────────────────────────
 ragas                  # Retrieval + RAG evaluation metrics
+
+# ─── Serving & UI Layer (api/, demo/) ─────────────────────────────────────────
+streamlit                  # UI Framework for RAG applications (demo/app.py)
+fastapi                    # High-performance web framework for API (api/main.py)
+uvicorn                    # ASGI server to run FastAPI
+pydantic                   # Data validation and settings management
