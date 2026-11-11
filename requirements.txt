@@ -25,4 +25,5 @@ faiss-cpu              # Optional local FAISS vector index comparison
 rank-bm25              # BM25 keyword search — exact numeric/ticker matching
 
 # ─── Retrieval Evaluation (eval/) ─────────────────────────────────────────────
-ragas                  # Retrieval + RAG evaluation metrics
+# ragas                  # Retrieval + RAG evaluation metrics
+mlflow                 # Experiment tracking (J-3) — self-hosted, free

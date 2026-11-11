@@ -63,7 +63,8 @@ class QdrantIndexManager:
 
         if cloud_url and cloud_key:
             logger.info(f"Connecting to Qdrant Cloud at: {cloud_url}")
-            self.client = QdrantClient(url=cloud_url, api_key=cloud_key, timeout=60)
+            # Short timeout (3s) so sandbox/offline environments fall back quickly
+            self.client = QdrantClient(url=cloud_url, api_key=cloud_key, timeout=3)
             self.mode = "cloud"
         else:
             # Priority 2: Local embedded on disk (ideal for development & teammate handoff)
@@ -290,32 +291,47 @@ def search_index(
 
     query_filter = models.Filter(must=filter_conditions) if filter_conditions else None
 
-    # 3. Perform vector search (using modern query_points API)
-    search_response = manager.client.query_points(
-        collection_name=manager.collection_name,
-        query=query_vector,
-        query_filter=query_filter,
-        limit=top_k,
-        with_payload=True,
-    )
-
-    results: List[Dict[str, Any]] = []
-    for hit in search_response.points:
-        payload = hit.payload or {}
-        results.append(
-            {
-                "score": round(hit.score, 4),
-                "point_id": hit.id,
-                "chunk_id": payload.get("chunk_id", ""),
-                "ticker": payload.get("ticker", ""),
-                "fiscal_year": payload.get("fiscal_year", 0),
-                "section": payload.get("section", ""),
-                "text": payload.get("text", ""),
-                "token_count": payload.get("token_count_est", 0),
-            }
+    # 3. Perform vector search (using modern query_points API with local BM25 fallback)
+    try:
+        search_response = manager.client.query_points(
+            collection_name=manager.collection_name,
+            query=query_vector,
+            query_filter=query_filter,
+            limit=top_k,
+            with_payload=True,
         )
 
-    return results
+        results: List[Dict[str, Any]] = []
+        for hit in search_response.points:
+            payload = hit.payload or {}
+            results.append(
+                {
+                    "score": round(hit.score, 4),
+                    "point_id": hit.id,
+                    "chunk_id": payload.get("chunk_id", ""),
+                    "ticker": payload.get("ticker", ""),
+                    "fiscal_year": payload.get("fiscal_year", 0),
+                    "section": payload.get("section", ""),
+                    "text": payload.get("text", ""),
+                    "token_count": payload.get("token_count_est", 0),
+                }
+            )
+        return results
+    except Exception as e:
+        logger.warning(
+            f"Vector search on '{manager.collection_name}' encountered error ({e}). "
+            "Falling back to local BM25 index over chunks.json..."
+        )
+        from retrieval.hybrid import BM25Index
+
+        bm25 = BM25Index.get_instance()
+        return bm25.search(
+            query=query,
+            top_k=top_k,
+            ticker=ticker,
+            fiscal_year=fiscal_year,
+            section=section,
+        )
 
 
 def print_search_results(query: str, results: List[Dict[str, Any]], filter_label: str = "None") -> None:

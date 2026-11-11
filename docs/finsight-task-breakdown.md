@@ -54,10 +54,10 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 | Person | Branch | What exists |
 |---|---|---|
 | Nilay | `nilay` | Full retrieval pipeline for all 6 companies (AAPL, MSFT, AMZN, GOOGL, META, NVDA): parsing, structure-aware chunking (3,504 chunks), BGE embeddings, Qdrant Cloud index, metadata filtering, `retrieve()`/`format_context_for_prompt()` API. Evaluated Naive baseline (N-1), 100-question benchmark harness (N-2), BM25 + RRF Hybrid Search (N-3), and Cross-Encoder Reranking (N-4) with full metrics recorded. |
-| Jay | `jay` | A 100-question gold-answer benchmark (`evaluation/dataset/questions.json`) covering 5 companies, both fiscal years, 6 question types. FastAPI service with stub endpoints `/query`, `/retrieve`, `/health` (J-1) and Docker containerization (`Dockerfile` + `docker-compose.yml`) (J-2). |
+| Jay | `jay` | A 100-question gold-answer benchmark (`evaluation/dataset/questions.json`) covering 5 companies, both fiscal years, 6 question types. FastAPI service with stub endpoints `/query`, `/retrieve`, `/health` (J-1), Docker containerization (`Dockerfile` + `docker-compose.yml`) (J-2), and MLflow experiment tracking integrated into the evaluation harness with replay tooling and full test coverage (J-3). |
 | Dhruv | `dhruv` | Generation layer complete as harnesses: dataset builder (D-1), citation-enforced prompt templates (D-2), QLoRA training harness (D-3), and GGUF export harness (D-4) all in `generation/`, with unit tests (40 passing). Remaining: **execute** D-3 on free-tier T4, then D-4 export. |
 
-**Coordination update:** Tasks N-1 through N-5, J-1, J-2, and D-1 through D-4 (harnesses) are completed. Retrieval architecture is locked with comprehensive benchmarks across Naive, Dense, Hybrid, and Cross-Encoder Reranking pipelines. The full generation layer now exists in `generation/` (dataset builder, prompt templates, QLoRA training, GGUF export). Next up: **execute** D-3 training on a free-tier T4, then D-4 export; in parallel Jay can proceed with J-3 (MLflow) against the locked retrieval harness.
+**Coordination update:** Tasks N-1 through N-5, J-1 through J-3, and D-1 through D-4 are completed. Retrieval architecture is locked with comprehensive benchmarks across Naive, Dense, Hybrid, and Cross-Encoder Reranking pipelines, fully tracked in MLflow. The generation layer is complete with QLoRA fine-tuning and quantized GGUF weights ready for CPU inference. Next up: **Phase 3 Integration & Evaluation** (J-4: wiring real retrieval and model into FastAPI endpoints, J-5: running comparative evaluation matrix).
 
 ---
 
@@ -123,7 +123,14 @@ A 3B parameter model (Llama 3.2 3B Instruct — locked, see prior decisions) has
 - **D-4 (COMPLETED):** Merged the D-3 LoRA adapter into the base model (`merge_and_unload`), compiled `llama.cpp`, and quantized the weights to `Q4_K_M` GGUF. Final artifact `finsight-llama-3.2-3b-q4_k_m.gguf` (2.02 GB / 2,019,377,280 bytes) is located at `generation/checkpoints/gguf/` ready for CPU-only inference in FastAPI. Phase 2 Generation deliverables are complete. Covered by `tests/test_quantize_gguf.py`.
 
 **Jay**
-- **J-3:** Wire experiment tracking (MLflow, self-hosted and free) into Nilay's evaluation harness so each of N-2 through N-4's runs gets logged automatically instead of printed to console only.
+- **J-3 (COMPLETED):** Wired experiment tracking (MLflow, self-hosted and free via local SQLite `sqlite:///mlflow.db`) into Nilay's evaluation harness (`eval/benchmark.py`). Automatically logs runs for N-1 (Naive Baseline), N-2 (Dense-Only), N-3 (Hybrid Dense+BM25), and N-4 (Hybrid+Rerank) with:
+  - Core IR metrics: `hit_rate_at_1`, `hit_rate_at_3`, `hit_rate_at_5`, and `mrr`
+  - Parameters: `retrieval_mode`, `top_k`, `hybrid`, `rerank`, `total_queries`
+  - Breakdown slices: per-question-type metrics (`type_*_hr5`, `type_*_mrr`) and per-company metrics (`co_*_hr5`, `co_*_mrr`)
+  - Traceable artifacts: logging raw JSON benchmark results to MLflow artifact store
+  - Replay tooling: built `scripts/mlflow_replay.py` to replay or backfill benchmark result JSONs directly into MLflow without re-running vector search
+  - Docker service: added `mlflow` UI service to `docker-compose.yml` (`http://localhost:5000`)
+  - Unit test suite: added `tests/test_mlflow_tracking.py` (17 tests passing), testing metric logging, breakdown slices, parameter isolation, graceful degradation when MLflow is absent, and dry-run replay validation.
 
 ---
 

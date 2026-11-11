@@ -11,3 +11,26 @@ services:
       - ./api:/app
     environment:
       - ENVIRONMENT=development
+    depends_on:
+      - mlflow
+
+  # ─── J-3: MLflow Experiment Tracking UI ──────────────────────────────────────
+  # Self-hosted, free, no external service required.
+  # Dashboard: http://localhost:5000
+  # Tracking URI used by eval/benchmark.py: sqlite:///mlflow.db (project root)
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.19.0
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount the project root so the SQLite DB and artifact files are accessible
+      - .:/workspace
+    working_dir: /workspace
+    command: >
+      mlflow ui
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /workspace/mlflow_artifacts
+      --host 0.0.0.0
+      --port 5000
+    # Keep the container running even if the API service is not started
+    restart: unless-stopped
