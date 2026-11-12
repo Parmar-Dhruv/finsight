@@ -151,3 +151,6 @@ htmlcov/
 *.zip
 
 TODO/
+
+# Local UI user/chat SQLite database
+data/*.db

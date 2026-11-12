@@ -1,17 +1,14 @@
 """
-FinSight - Interactive Financial QA & Monitoring UI (demo/app.py)
+FinSight - Conversational Financial RAG Chatbot & Monitoring UI (demo/app.py)
 
-Polished Streamlit interface for FinSight SEC 10-K RAG:
-  1. FinSight Q&A & Retrieval:
-     * 1-click example financial queries
-     * Optional auto-detection of company ticker & fiscal year from question
-     * Dense / Hybrid (BM25+RRF) / Cross-Encoder Rerank controls
-     * Citation-highlighted answer card with [SOURCE N] badges + KPI metrics
-     * Source passage cards with provenance & relevance scores
-     * Session query history
-  2. Monitoring & Benchmarks (Tasks J-5, J-6, J-7, N/D-1):
-     * Live FastAPI /metrics polling
-     * Visual bar charts for J-6 CPU latency, J-5 5-config benchmark, and N/D-1 error breakdown
+Features:
+  * User Login & Registration (SQLite + PBKDF2-SHA256) + 1-click Demo Analyst login
+  * Persistent Multi-Session Chat History per user (+ New Chat, Switch, Delete, Export)
+  * Native ChatGPT-style conversation bubbles (st.chat_message + st.chat_input)
+  * Inline [SOURCE N] citation badges + expandable 10-K evidence cards per response
+  * Thumbs up / down feedback per assistant response
+  * Auto-detection of company ticker & fiscal year + manual sidebar overrides
+  * Monitoring & Benchmarks dashboard (J-5, J-6, J-7, N/D-1 + user feedback stats)
 
 Run:
     python -m streamlit run demo/app.py
@@ -28,10 +25,11 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import streamlit as st
 
-# Ensure project root is importable when Streamlit runs this file directly.
 ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
+
+from demo.auth_store import AuthChatStore
 
 RESULTS_DIR = ROOT / "evaluation" / "results"
 TICKERS = ["(any)", "AAPL", "MSFT", "AMZN", "GOOGL", "META", "NVDA"]
@@ -56,13 +54,12 @@ COMPANY_PATTERNS: List[Tuple[str, str]] = [
 ]
 
 st.set_page_config(
-    page_title="FinSight — SEC 10-K Financial RAG",
+    page_title="FinSight AI — SEC 10-K Financial Chatbot",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# Subtle custom CSS for cleaner cards and citation badges
 st.markdown(
     """
     <style>
@@ -72,18 +69,17 @@ st.markdown(
         color: #ffffff;
         padding: 1px 7px;
         border-radius: 6px;
-        font-size: 0.82em;
+        font-size: 0.80em;
         font-weight: 600;
         margin: 0 2px;
     }
-    .answer-card {
-        background-color: rgba(31, 111, 235, 0.08);
-        border-left: 4px solid #1f6feb;
-        padding: 1rem 1.2rem;
-        border-radius: 0 8px 8px 0;
-        margin-bottom: 0.75rem;
-        font-size: 1.04rem;
-        line-height: 1.6;
+    .auth-box {
+        max-width: 460px;
+        margin: 2rem auto;
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid rgba(128, 128, 128, 0.25);
+        background-color: rgba(31, 111, 235, 0.04);
     }
     </style>
     """,
@@ -91,9 +87,13 @@ st.markdown(
 )
 
 
+@st.cache_resource
+def get_store() -> AuthChatStore:
+    return AuthChatStore()
+
+
 @st.cache_resource(show_spinner="Loading retrieval engine (embeddings + Qdrant)...")
 def get_retriever():
-    """Warms the FinSightRetriever singleton once per Streamlit session."""
     from retrieval.search import FinSightRetriever
 
     return FinSightRetriever.get_instance()
@@ -101,7 +101,6 @@ def get_retriever():
 
 @st.cache_resource(show_spinner="Loading FinSight generator...")
 def get_generator():
-    """Warms the FinSightGenerator singleton once per Streamlit session."""
     from generation.inference import FinSightGenerator
 
     return FinSightGenerator.get_instance()
@@ -129,12 +128,7 @@ def _auto_detect_filters(query: str) -> Tuple[Optional[str], Optional[int]]:
 
 
 def _format_answer_html(answer: str) -> str:
-    """Highlights [SOURCE N] tags as visual citation badges."""
-    escaped = (
-        answer.replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    escaped = answer.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     return re.sub(
         r"(\[SOURCE\s+\d+\])",
         r'<span class="citation-badge">\1</span>',
@@ -142,145 +136,311 @@ def _format_answer_html(answer: str) -> str:
     )
 
 
-def render_qa_tab() -> None:
-    if "query_input" not in st.session_state:
-        st.session_state.query_input = EXAMPLE_QUERIES[0]
-    if "qa_history" not in st.session_state:
-        st.session_state.qa_history = []
+def _export_markdown(messages: List[Dict[str, Any]], title: str) -> str:
+    lines = [f"# FinSight Chat Export — {title}\n"]
+    for m in messages:
+        role_label = "**User**" if m["role"] == "user" else "**FinSight AI**"
+        lines.append(f"### {role_label}\n{m['content']}\n")
+        if m.get("sources"):
+            lines.append("**Sources:**")
+            for idx, src in enumerate(m["sources"], 1):
+                lines.append(
+                    f"- `[SOURCE {idx}]` {src.get('ticker')} FY{src.get('fiscal_year')} "
+                    f"{src.get('section')} (Score: {src.get('score', 0.0):.4f})"
+                )
+            lines.append("")
+    return "\n".join(lines)
 
-    with st.sidebar:
-        st.header("Retrieval & Filters")
-        auto_filter = st.checkbox(
-            "Auto-detect ticker & year from question",
-            value=True,
-            help="Automatically extracts company (e.g. Apple -> AAPL) and single fiscal year when set to (any).",
+
+def render_auth_screen(store: AuthChatStore) -> None:
+    _, center_col, _ = st.columns([1, 1.4, 1])
+    with center_col:
+        st.markdown("## 📊 FinSight AI")
+        st.caption(
+            "Domain-Adapted SEC 10-K Financial Assistant · AAPL, MSFT, AMZN, GOOGL, META, NVDA"
         )
-        ticker = st.selectbox("Ticker", TICKERS, index=0)
-        fiscal_year = st.selectbox("Fiscal year", YEARS, index=0)
-        section = st.selectbox("Section", SECTIONS, index=0)
 
-        st.divider()
-        st.header("Pipeline Options")
-        top_k = st.slider("Top-K Passages", min_value=1, max_value=10, value=5)
-        hybrid = st.checkbox("Hybrid (Dense + BM25 RRF)", value=True)
-        rerank = st.checkbox(
-            "Cross-encoder rerank",
-            value=False,
-            help="Pure-NumPy MiniLM reranking adds ~3-7s on CPU.",
-        )
-        generate_ans = st.checkbox("Generate citation-backed answer", value=True)
+        tab_login, tab_signup = st.tabs(["Sign In", "Create Account"])
 
-        if st.session_state.qa_history:
-            st.divider()
-            st.header("Recent Queries")
-            for item in reversed(st.session_state.qa_history[-5:]):
-                st.caption(f"• {item['query'][:55]} ({item['latency_ms']:.0f} ms)")
+        with tab_login:
+            with st.form("login_form"):
+                email = st.text_input("Email", placeholder="demo@finsight.ai")
+                password = st.text_input("Password", type="password", placeholder="••••••••")
+                submitted = st.form_submit_button("Sign In", type="primary", use_container_width=True)
+                if submitted:
+                    user = store.authenticate_user(email, password)
+                    if user:
+                        st.session_state.user = user
+                        st.session_state.active_session_id = None
+                        st.rerun()
+                    else:
+                        st.error("Invalid email or password.")
 
-    # Quick-start preset chips
-    st.markdown("**Try an example question:**")
-    chip_cols = st.columns(len(EXAMPLE_QUERIES))
-    for idx, (col, ex) in enumerate(zip(chip_cols, EXAMPLE_QUERIES)):
-        short_label = ex.split("?")[0][:28] + "..."
-        if col.button(short_label, key=f"preset_{idx}", use_container_width=True):
-            st.session_state.query_input = ex
+            if st.button("⚡ One-Click Demo Analyst Login", use_container_width=True):
+                user = store.authenticate_user("demo@finsight.ai", "finsight123")
+                if user:
+                    st.session_state.user = user
+                    st.session_state.active_session_id = None
+                    st.rerun()
+            st.caption("Demo credentials: `demo@finsight.ai` / `finsight123`")
 
-    query = st.text_input(
-        "Ask a financial question across SEC 10-K filings:",
-        key="query_input",
-        placeholder="e.g., What were Apple's total net sales in fiscal 2024?",
-    )
+        with tab_signup:
+            with st.form("signup_form"):
+                name = st.text_input("Full Name", placeholder="Nilay Patel")
+                new_email = st.text_input("Email", placeholder="you@example.com")
+                new_pass = st.text_input("Password (min 6 chars)", type="password")
+                reg_submit = st.form_submit_button("Create Account", type="primary", use_container_width=True)
+                if reg_submit:
+                    ok, msg = store.register_user(name, new_email, new_pass)
+                    if ok:
+                        st.success(msg)
+                    else:
+                        st.error(msg)
 
-    run_clicked = st.button("Search & Answer", type="primary")
-    if run_clicked and query.strip():
-        eff_ticker = None if ticker == "(any)" else ticker
-        eff_year = None if fiscal_year == "(any)" else int(fiscal_year)
-        eff_section = None if section == "(any)" else section
 
-        if auto_filter:
-            det_ticker, det_year = _auto_detect_filters(query)
-            if eff_ticker is None:
-                eff_ticker = det_ticker
-            if eff_year is None:
-                eff_year = det_year
+def _process_user_prompt(
+    store: AuthChatStore,
+    session_id: int,
+    prompt_text: str,
+    ticker: Optional[str],
+    fiscal_year: Optional[int],
+    section: Optional[str],
+    auto_filter: bool,
+    top_k: int,
+    hybrid: bool,
+    rerank: bool,
+) -> None:
+    eff_ticker = ticker
+    eff_year = fiscal_year
+    if auto_filter:
+        det_t, det_y = _auto_detect_filters(prompt_text)
+        if eff_ticker is None:
+            eff_ticker = det_t
+        if eff_year is None:
+            eff_year = det_y
 
-        t0 = time.perf_counter()
-        with st.spinner("Retrieving 10-K evidence and generating grounded answer..."):
+    # Update session title on first message
+    existing_msgs = store.get_messages(session_id)
+    if not existing_msgs:
+        store.update_session_title(session_id, prompt_text[:48])
+
+    store.add_message(session_id, "user", prompt_text)
+
+    with st.chat_message("user"):
+        st.markdown(prompt_text)
+
+    with st.chat_message("assistant"):
+        with st.spinner("Searching 10-K filings and synthesizing cited answer..."):
+            t0 = time.perf_counter()
             try:
                 retriever = get_retriever()
                 chunks = retriever.retrieve(
-                    query=query,
+                    query=prompt_text,
                     k=top_k,
                     ticker=eff_ticker,
                     fiscal_year=eff_year,
-                    section=eff_section,
+                    section=section,
                     hybrid=hybrid,
                     rerank=rerank,
                     rerank_pool=10,
                 )
             except Exception as exc:
-                st.error(f"Retrieval failed: {exc}")
-                st.info(
-                    "Check that `.env` has valid QDRANT_URL / QDRANT_API_KEY (or that a "
-                    "local index exists at data/processed/qdrant_db/)."
-                )
+                err_msg = f"Retrieval error: {exc}"
+                st.error(err_msg)
+                store.add_message(session_id, "assistant", err_msg)
                 return
 
-            gen_out: Optional[Dict[str, Any]] = None
-            if generate_ans and chunks:
-                generator = get_generator()
-                gen_out = generator.generate(question=query, context_chunks=chunks)
+            generator = get_generator()
+            gen_out = generator.generate(question=prompt_text, context_chunks=chunks)
+            total_ms = (time.perf_counter() - t0) * 1000.0
 
-        total_ms = (time.perf_counter() - t0) * 1000.0
-        mode = "dense" + (" + BM25" if hybrid else "") + (" + rerank" if rerank else "")
+            answer = gen_out["answer"]
+            mode = "dense" + (" + BM25" if hybrid else "") + (" + rerank" if rerank else "")
+            meta = {
+                "latency_ms": round(total_ms, 1),
+                "mode": mode,
+                "filters": f"{eff_ticker or 'All'} / {eff_year or 'All'} / {section or 'All'}",
+                "backend": gen_out.get("backend", "domain_synthesis"),
+                "is_refusal": bool(gen_out.get("is_refusal")),
+            }
 
-        st.session_state.qa_history.append({"query": query, "latency_ms": total_ms})
-
-        # KPI Row
-        k1, k2, k3, k4 = st.columns(4)
-        k1.metric("Passages Retrieved", len(chunks))
-        k2.metric("End-to-End Latency", f"{total_ms:.0f} ms")
-        k3.metric("Active Filters", f"{eff_ticker or 'All'} / {eff_year or 'All'}")
-        k4.metric("Retrieval Mode", mode)
-
-        if not chunks:
-            st.warning("No passages returned. Try disabling filters or rephrasing your question.")
-            return
-
-        if gen_out is not None:
-            st.markdown("### Grounded Answer")
-            if gen_out.get("is_refusal"):
-                st.warning(gen_out["answer"])
+            if meta["is_refusal"]:
+                st.warning(answer)
             else:
-                st.markdown(
-                    f'<div class="answer-card">{_format_answer_html(gen_out["answer"])}</div>',
-                    unsafe_allow_html=True,
-                )
+                st.markdown(_format_answer_html(answer), unsafe_allow_html=True)
+
             st.caption(
-                f"Generator: `{gen_out.get('backend')}` · "
-                f"Citations: `{', '.join(gen_out.get('citations', [])) or 'None'}` · "
-                f"Synthesis Latency: `{gen_out.get('latency_ms')} ms`"
+                f"Latency: `{meta['latency_ms']} ms` · Mode: `{meta['mode']}` · "
+                f"Filters: `{meta['filters']}` · Backend: `{meta['backend']}`"
             )
 
-        st.markdown("### Retrieved 10-K Evidence")
-        for rank, chunk in enumerate(chunks, 1):
-            header = (
-                f"[SOURCE {rank}]  {chunk['ticker']} · FY{chunk['fiscal_year']} · "
-                f"{chunk['section'].upper()}  |  Score: {chunk['score']:.4f}"
+            if chunks:
+                with st.expander(f"📚 View Retrieved 10-K Sources ({len(chunks)})"):
+                    for idx, ch in enumerate(chunks, 1):
+                        st.markdown(
+                            f"**[SOURCE {idx}] {ch['ticker']} · FY{ch['fiscal_year']} · "
+                            f"{ch['section'].upper()}** (Score: `{ch['score']:.4f}`)"
+                        )
+                        st.write(ch["text"])
+                        st.divider()
+
+            store.add_message(
+                session_id,
+                "assistant",
+                answer,
+                sources=chunks,
+                metadata=meta,
             )
-            with st.expander(header, expanded=(rank == 1)):
-                st.caption(f"Chunk ID: `{chunk.get('chunk_id', '')}`")
-                st.write(chunk["text"])
-
-        with st.expander("View Attributed LLM Prompt Context"):
-            from retrieval.search import format_context_for_prompt
-
-            st.code(format_context_for_prompt(chunks, max_tokens=2000), language="text")
 
 
-def render_monitoring_tab() -> None:
-    st.subheader("System Monitoring, Latency & Evaluation Dashboard (Tasks J-5 / J-6 / J-7 / N/D-1)")
+def render_chat_tab(store: AuthChatStore, user: Dict[str, Any]) -> None:
+    sessions = store.list_sessions(user["id"])
+    if not sessions:
+        new_id = store.create_session(user["id"], title="New Chat")
+        st.session_state.active_session_id = new_id
+        sessions = store.list_sessions(user["id"])
 
-    # 1. Live FastAPI /metrics check
+    if (
+        "active_session_id" not in st.session_state
+        or st.session_state.active_session_id not in [s["id"] for s in sessions]
+    ):
+        st.session_state.active_session_id = sessions[0]["id"]
+
+    active_sid = st.session_state.active_session_id
+    active_session = next(s for s in sessions if s["id"] == active_sid)
+
+    with st.sidebar:
+        st.markdown(f"### 👤 {user['name']}")
+        st.caption(user["email"])
+        if st.button("Sign Out", use_container_width=True):
+            st.session_state.pop("user", None)
+            st.session_state.pop("active_session_id", None)
+            st.rerun()
+
+        st.divider()
+        st.markdown("### 💬 Conversations")
+        if st.button("➕ New Chat", type="primary", use_container_width=True):
+            st.session_state.active_session_id = store.create_session(user["id"], title="New Chat")
+            st.rerun()
+
+        for sess in sessions:
+            is_active = sess["id"] == active_sid
+            label = f"🟢 {sess['title']}" if is_active else f"💬 {sess['title']}"
+            if st.button(label, key=f"sess_{sess['id']}", use_container_width=True):
+                st.session_state.active_session_id = sess["id"]
+                st.rerun()
+
+        msgs_for_export = store.get_messages(active_sid)
+        col_del, col_exp = st.columns(2)
+        if col_del.button("🗑️ Delete", use_container_width=True):
+            store.delete_session(user["id"], active_sid)
+            st.session_state.active_session_id = None
+            st.rerun()
+        col_exp.download_button(
+            "⬇️ Export",
+            data=_export_markdown(msgs_for_export, active_session["title"]),
+            file_name=f"finsight_chat_{active_sid}.md",
+            mime="text/markdown",
+            use_container_width=True,
+        )
+
+        st.divider()
+        st.markdown("### ⚙️ Retrieval Settings")
+        auto_filter = st.checkbox("Auto-detect company & year", value=True)
+        ticker = st.selectbox("Ticker", TICKERS, index=0)
+        fiscal_year = st.selectbox("Fiscal Year", YEARS, index=0)
+        section = st.selectbox("10-K Section", SECTIONS, index=0)
+        top_k = st.slider("Top-K Passages", min_value=1, max_value=10, value=5)
+        hybrid = st.checkbox("Hybrid (Dense + BM25 RRF)", value=True)
+        rerank = st.checkbox("Cross-encoder rerank", value=False)
+
+    # Render conversation messages
+    messages = store.get_messages(active_sid)
+    if not messages:
+        st.info(
+            "Welcome to **FinSight AI**! Ask any question about Apple, Microsoft, Amazon, "
+            "Alphabet, Meta, or NVIDIA SEC 10-K filings (FY2023–FY2024), or click a starter prompt below:"
+        )
+        cols = st.columns(len(EXAMPLE_QUERIES))
+        for idx, (col, ex) in enumerate(zip(cols, EXAMPLE_QUERIES)):
+            if col.button(ex[:30] + "...", key=f"starter_{idx}", use_container_width=True):
+                st.session_state.pending_prompt = ex
+                st.rerun()
+
+    for msg in messages:
+        with st.chat_message(msg["role"]):
+            if msg["role"] == "assistant":
+                meta = msg.get("metadata", {})
+                if meta.get("is_refusal"):
+                    st.warning(msg["content"])
+                else:
+                    st.markdown(_format_answer_html(msg["content"]), unsafe_allow_html=True)
+                if meta:
+                    st.caption(
+                        f"Latency: `{meta.get('latency_ms', 0)} ms` · "
+                        f"Mode: `{meta.get('mode', '-')}` · "
+                        f"Filters: `{meta.get('filters', '-')}`"
+                    )
+                sources = msg.get("sources", [])
+                if sources:
+                    with st.expander(f"📚 View Retrieved 10-K Sources ({len(sources)})"):
+                        for idx, ch in enumerate(sources, 1):
+                            st.markdown(
+                                f"**[SOURCE {idx}] {ch.get('ticker')} · FY{ch.get('fiscal_year')} · "
+                                f"{str(ch.get('section', '')).upper()}** (Score: `{ch.get('score', 0.0):.4f}`)"
+                            )
+                            st.write(ch.get("text", ""))
+                            st.divider()
+
+                # Feedback buttons
+                fb = msg.get("feedback")
+                fb_c1, fb_c2, _ = st.columns([1, 1, 10])
+                if fb_c1.button("👍" if fb != "up" else "👍✓", key=f"up_{msg['id']}"):
+                    store.set_feedback(msg["id"], "up")
+                    st.rerun()
+                if fb_c2.button("👎" if fb != "down" else "👎✓", key=f"down_{msg['id']}"):
+                    store.set_feedback(msg["id"], "down")
+                    st.rerun()
+            else:
+                st.markdown(msg["content"])
+
+    # Handle starter click or chat input
+    eff_t = None if ticker == "(any)" else ticker
+    eff_y = None if fiscal_year == "(any)" else int(fiscal_year)
+    eff_s = None if section == "(any)" else section
+
+    pending = st.session_state.pop("pending_prompt", None)
+    user_prompt = st.chat_input(
+        "Ask about revenue, margins, risks, segments, or capex in SEC 10-K filings..."
+    )
+    final_prompt = pending or user_prompt
+    if final_prompt and final_prompt.strip():
+        _process_user_prompt(
+            store=store,
+            session_id=active_sid,
+            prompt_text=final_prompt.strip(),
+            ticker=eff_t,
+            fiscal_year=eff_y,
+            section=eff_s,
+            auto_filter=auto_filter,
+            top_k=top_k,
+            hybrid=hybrid,
+            rerank=rerank,
+        )
+        st.rerun()
+
+
+def render_monitoring_tab(store: AuthChatStore) -> None:
+    st.subheader("System Monitoring, User Feedback & Evaluation Benchmarks")
+
+    # User Feedback KPIs
+    fb_stats = store.get_feedback_stats()
+    f1, f2, f3 = st.columns(3)
+    f1.metric("Assistant Responses", fb_stats["total_assistant_messages"])
+    f2.metric("Helpful (👍)", fb_stats["thumbs_up"])
+    f3.metric("Needs Improvement (👎)", fb_stats["thumbs_down"])
+
+    st.divider()
     st.markdown("### 1. Live FastAPI Telemetry (`/metrics`)")
     col_url, col_btn = st.columns([4, 1])
     api_url = col_url.text_input("FastAPI Base URL", value="http://localhost:8000")
@@ -303,7 +463,6 @@ def render_monitoring_tab() -> None:
         except Exception as exc:
             st.info(f"FastAPI server is not running at `{api_url}` ({exc}). Offline benchmarks are shown below.")
 
-    # 2. J-5 Comparative Evaluation Matrix
     st.markdown("### 2. Comparative Evaluation Matrix (Task J-5 · 100 Questions)")
     j5_data = _load_json(RESULTS_DIR / "j5_comparative_matrix.json")
     if j5_data and "matrix_summary" in j5_data:
@@ -311,57 +470,54 @@ def render_monitoring_tab() -> None:
         st.dataframe(summary_rows, use_container_width=True)
         rag_rows = [r for r in summary_rows if r.get("use_rag")]
         if rag_rows:
-            chart_data = {
+            st.bar_chart({
                 r["config_name"]: {
                     "Hit Rate @ 1 (%)": r["hit_rate_at_1"],
                     "Hit Rate @ 5 (%)": r["hit_rate_at_5"],
                 }
                 for r in rag_rows
-            }
-            st.bar_chart(chart_data)
-    else:
-        st.info("Run `python eval/j5_comparative_eval.py` to generate comparative matrix.")
+            })
 
-    # 3. CPU Latency Profile (J-6) & Error Analysis (N/D-1)
     c_left, c_right = st.columns(2)
     with c_left:
         st.markdown("### 3. CPU Latency Profile (Task J-6)")
         lat_data = _load_json(RESULTS_DIR / "j6_latency_profile.json")
         if lat_data and "modes" in lat_data:
-            rows = [
-                {
-                    "Mode": mode_name,
-                    "Mean (ms)": stats.get("mean_ms"),
-                    "p50 (ms)": stats.get("p50_ms"),
-                    "p95 (ms)": stats.get("p95_ms"),
-                    "<5s SLA": "Yes" if stats.get("meets_5s_sla") else "No",
-                }
-                for mode_name, stats in lat_data["modes"].items()
-            ]
-            st.dataframe(rows, use_container_width=True)
-        else:
-            st.info("Run `python scripts/profile_latency.py` to generate CPU latency profile.")
+            st.dataframe(
+                [
+                    {
+                        "Mode": m,
+                        "Mean (ms)": s.get("mean_ms"),
+                        "p50 (ms)": s.get("p50_ms"),
+                        "p95 (ms)": s.get("p95_ms"),
+                        "<5s SLA": "Yes" if s.get("meets_5s_sla") else "No",
+                    }
+                    for m, s in lat_data["modes"].items()
+                ],
+                use_container_width=True,
+            )
 
     with c_right:
         st.markdown("### 4. Error Analysis (Task N/D-1)")
         nd1_data = _load_json(RESULTS_DIR / "nd1_error_analysis.json")
         if nd1_data and "full_finsight_system" in nd1_data:
-            full_err = nd1_data["full_finsight_system"].get("error_counts", {})
-            st.bar_chart(full_err)
-        else:
-            st.info("Run `python eval/error_analysis.py` to generate error analysis.")
+            st.bar_chart(nd1_data["full_finsight_system"].get("error_counts", {}))
 
 
 def main() -> None:
-    st.title("📊 FinSight — SEC 10-K Financial RAG")
-    st.caption(
-        "Domain-Adapted Financial Q&A over Apple, Microsoft, Amazon, Alphabet, Meta & NVIDIA (FY2023–FY2024)"
-    )
-    tab1, tab2 = st.tabs(["🔍 Q&A & Retrieval", "📈 Monitoring & Benchmarks"])
-    with tab1:
-        render_qa_tab()
-    with tab2:
-        render_monitoring_tab()
+    store = get_store()
+    user = st.session_state.get("user")
+
+    if not user:
+        render_auth_screen(store)
+        return
+
+    st.title("📊 FinSight AI — SEC 10-K Financial Chatbot")
+    tab_chat, tab_mon = st.tabs(["💬 Financial Assistant", "📈 Monitoring & Benchmarks"])
+    with tab_chat:
+        render_chat_tab(store, user)
+    with tab_mon:
+        render_monitoring_tab(store)
 
 
 if __name__ == "__main__":
