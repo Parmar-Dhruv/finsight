@@ -23,6 +23,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
+try:
+    import mlflow
+    MLFLOW_AVAILABLE = True
+except ImportError:
+    MLFLOW_AVAILABLE = False
+    logging.warning("MLflow not installed. Run tracking disabled. Install with: pip install mlflow")
+
 # Ensure project root is on sys.path
 BASE_DIR = Path(__file__).resolve().parent.parent
 if str(BASE_DIR) not in sys.path:
@@ -42,6 +49,8 @@ logger = logging.getLogger(__name__)
 
 BENCHMARK_PATH = BASE_DIR / "evaluation" / "dataset" / "questions.json"
 RESULTS_DIR = BASE_DIR / "evaluation" / "results"
+MLFLOW_EXPERIMENT = "FinSight-Retrieval"
+MLFLOW_TRACKING_URI = f"sqlite:///{BASE_DIR / 'mlflow.db'}"
 
 
 # ---------------------------------------------------------------------------
@@ -409,19 +418,105 @@ def print_and_save_full_report(
 
 
 # ---------------------------------------------------------------------------
+# MLflow Logging Helper (J-3)
+# ---------------------------------------------------------------------------
+
+def log_run_to_mlflow(
+    run_name: str,
+    metrics: Dict[str, float],
+    params: Dict[str, Any],
+    breakdown_by_type: Optional[Dict[str, Dict]] = None,
+    breakdown_by_company: Optional[Dict[str, Dict]] = None,
+    artifact_path: Optional[str] = None,
+) -> None:
+    """
+    Logs a single benchmark run to MLflow (J-3).
+
+    Each call creates one MLflow run under the FinSight-Retrieval experiment,
+    logging:
+      - Metrics  : hit_rate_at_1, hit_rate_at_3, hit_rate_at_5, mrr
+      - Params   : retrieval_mode, top_k, total_queries, hybrid, rerank
+      - Metrics  : per-question-type HR@5 & MRR (prefix: type_)
+      - Metrics  : per-company HR@5 & MRR (prefix: co_)
+      - Artifact : the benchmark result JSON file, if artifact_path is provided
+
+    Parameters
+    ----------
+    run_name : str
+        Display name for the MLflow run (e.g. "N4-Hybrid-BM25-Rerank").
+    metrics : dict
+        Core IR metrics (hit_rate_at_1, hit_rate_at_3, hit_rate_at_5, mrr).
+    params : dict
+        Run configuration (retrieval_mode, top_k, hybrid, rerank, total_queries).
+    breakdown_by_type : dict, optional
+        Per-question-type stats dict: {type_name: {"hr5": float, "mrr": float}}.
+    breakdown_by_company : dict, optional
+        Per-company stats dict: {ticker: {"hr5": float, "mrr": float}}.
+    artifact_path : str, optional
+        Filesystem path to a JSON result file to log as a run artifact.
+    """
+    if not MLFLOW_AVAILABLE:
+        print(f"[MLflow] Skipping run logging (mlflow not installed): {run_name}")
+        return
+
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    mlflow.set_experiment(MLFLOW_EXPERIMENT)
+
+    with mlflow.start_run(run_name=run_name):
+        # Core IR retrieval metrics
+        mlflow.log_metric("hit_rate_at_1", metrics.get("hit_rate_at_1", 0.0))
+        mlflow.log_metric("hit_rate_at_3", metrics.get("hit_rate_at_3", 0.0))
+        mlflow.log_metric("hit_rate_at_5", metrics.get("hit_rate_at_5", 0.0))
+        mlflow.log_metric("mrr",           metrics.get("mrr",           0.0))
+
+        # Run configuration parameters
+        mlflow.log_params(params)
+
+        # Per-question-type HR@5 & MRR as metrics (prefixed with type_)
+        if breakdown_by_type:
+            for q_type, stat in breakdown_by_type.items():
+                safe_key = q_type.replace(" ", "_").replace("/", "_").lower()
+                mlflow.log_metric(f"type_{safe_key}_hr5", stat.get("hr5", 0.0))
+                mlflow.log_metric(f"type_{safe_key}_mrr",  stat.get("mrr",  0.0))
+
+        # Per-company HR@5 & MRR as metrics (prefixed with co_)
+        if breakdown_by_company:
+            for company, stat in breakdown_by_company.items():
+                safe_key = company.replace(" ", "_").lower()
+                mlflow.log_metric(f"co_{safe_key}_hr5", stat.get("hr5", 0.0))
+                mlflow.log_metric(f"co_{safe_key}_mrr",  stat.get("mrr",  0.0))
+
+        # Log the benchmark result JSON as a run artifact for full traceability
+        if artifact_path:
+            artifact_file = Path(artifact_path)
+            if artifact_file.exists():
+                mlflow.log_artifact(str(artifact_file), artifact_path="benchmark_results")
+            else:
+                logger.warning("[MLflow] Artifact file not found, skipping: %s", artifact_path)
+
+        print(f"[MLflow] Logged run '{run_name}' → {MLFLOW_TRACKING_URI}")
+
+
+# ---------------------------------------------------------------------------
 # Main Execution
 # ---------------------------------------------------------------------------
 
 def main() -> None:
     t_start = time.time()
     print("=" * 85)
-    print("FinSight Task N-3: Hybrid (Dense + BM25) vs Dense vs Naive Benchmark")
+    print("FinSight Task N-3/N-4: Hybrid (Dense + BM25) vs Dense vs Naive Benchmark")
     print("=" * 85)
+
+    if MLFLOW_AVAILABLE:
+        print(f"[MLflow] Tracking enabled → experiment: '{MLFLOW_EXPERIMENT}' at {MLFLOW_TRACKING_URI}")
+    else:
+        print("[MLflow] Not installed — run tracking disabled.")
 
     # 1. Load and convert 100-question benchmark
     print(f"Loading benchmark from: {BENCHMARK_PATH}")
     test_suite = load_and_convert_benchmark(BENCHMARK_PATH)
-    print(f"Successfully loaded and formatted {len(test_suite)} benchmark questions.")
+    n_queries = len(test_suite)
+    print(f"Successfully loaded and formatted {n_queries} benchmark questions.")
 
     # 2. Setup Naive Baseline
     print("\nPreparing Naive Baseline corpus and index...")
@@ -437,6 +532,15 @@ def main() -> None:
         corpus=corpus,
         top_k=5,
     )
+    naive_type_bd  = compute_breakdown_by_category(naive_items, "answer_type")
+    naive_comp_bd  = compute_breakdown_by_category(naive_items, "ticker")
+    log_run_to_mlflow(
+        run_name="N1-Naive-Baseline",
+        metrics=naive_metrics,
+        params={"retrieval_mode": "naive", "top_k": 5, "hybrid": False, "rerank": False, "total_queries": n_queries},
+        breakdown_by_type=naive_type_bd,
+        breakdown_by_company=naive_comp_bd,
+    )
 
     # 4. Setup Domain-Adapted Retriever
     print("\nConnecting to Domain-Adapted Retriever (Qdrant & BM25)...")
@@ -449,6 +553,15 @@ def main() -> None:
         top_k=5,
         hybrid=False,
     )
+    dense_type_bd = compute_breakdown_by_category(dense_items, "answer_type")
+    dense_comp_bd = compute_breakdown_by_category(dense_items, "ticker")
+    log_run_to_mlflow(
+        run_name="N2-Dense-Only",
+        metrics=dense_metrics,
+        params={"retrieval_mode": "dense", "top_k": 5, "hybrid": False, "rerank": False, "total_queries": n_queries},
+        breakdown_by_type=dense_type_bd,
+        breakdown_by_company=dense_comp_bd,
+    )
 
     # 6. Run Domain-Adapted Hybrid Pipeline (Dense + BM25 RRF)
     hybrid_metrics, hybrid_items = run_domain_adapted_benchmark(
@@ -456,6 +569,15 @@ def main() -> None:
         retriever=retriever,
         top_k=5,
         hybrid=True,
+    )
+    hybrid_type_bd = compute_breakdown_by_category(hybrid_items, "answer_type")
+    hybrid_comp_bd = compute_breakdown_by_category(hybrid_items, "ticker")
+    log_run_to_mlflow(
+        run_name="N3-Hybrid-Dense-BM25-RRF",
+        metrics=hybrid_metrics,
+        params={"retrieval_mode": "hybrid", "top_k": 5, "hybrid": True, "rerank": False, "total_queries": n_queries},
+        breakdown_by_type=hybrid_type_bd,
+        breakdown_by_company=hybrid_comp_bd,
     )
 
     # 7. Run Domain-Adapted Hybrid Pipeline + Rerank
@@ -466,6 +588,15 @@ def main() -> None:
         top_k=5,
         hybrid=True,
         rerank=True,
+    )
+    rerank_type_bd = compute_breakdown_by_category(hybrid_rerank_items, "answer_type")
+    rerank_comp_bd = compute_breakdown_by_category(hybrid_rerank_items, "ticker")
+    log_run_to_mlflow(
+        run_name="N4-Hybrid-BM25-Rerank",
+        metrics=hybrid_rerank_metrics,
+        params={"retrieval_mode": "hybrid+rerank", "top_k": 5, "hybrid": True, "rerank": True, "total_queries": n_queries},
+        breakdown_by_type=rerank_type_bd,
+        breakdown_by_company=rerank_comp_bd,
     )
 
     # 8. Report and Save
@@ -478,10 +609,15 @@ def main() -> None:
         hybrid_items=hybrid_items,
         hybrid_rerank_metrics=hybrid_rerank_metrics,
         hybrid_rerank_items=hybrid_rerank_items,
-        n_queries=len(test_suite),
+        n_queries=n_queries,
     )
 
-    print(f"\nTask N-3 completed in {time.time() - t_start:.1f}s")
+    if MLFLOW_AVAILABLE:
+        print(f"\n[MLflow] All runs logged. View dashboard with:")
+        print(f"         mlflow ui --backend-store-uri {MLFLOW_TRACKING_URI}")
+        print(f"         Then open: http://localhost:5000")
+
+    print(f"\nTask N-3/N-4 completed in {time.time() - t_start:.1f}s")
 
 
 if __name__ == "__main__":

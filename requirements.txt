@@ -1,5 +1,5 @@
 # ─── Nilay — Retrieval & Data Layer ───────────────────────────────────────────
-# These are the ONLY dependencies for Nilay's scope.
+# These are the dependencies for Nilay's scope.
 # Dhruv (generation) and Jay (api/deployment) manage their own requirements.
 
 # ─── Core ─────────────────────────────────────────────────────────────────────
@@ -24,11 +24,12 @@ faiss-cpu              # Optional local FAISS vector index comparison
 # ─── Sparse / Hybrid Retrieval (search.py) ────────────────────────────────────
 rank-bm25              # BM25 keyword search — exact numeric/ticker matching
 
-# ─── Retrieval Evaluation (eval/) ─────────────────────────────────────────────
+# ─── Retrieval Evaluation & MLOps (eval/, scripts/) ───────────────────────────
 ragas                  # Retrieval + RAG evaluation metrics
+mlflow                 # Experiment tracking (J-3) — self-hosted, free
 
 # ─── Serving & UI Layer (api/, demo/) ─────────────────────────────────────────
-streamlit                  # UI Framework for RAG applications (demo/app.py)
-fastapi                    # High-performance web framework for API (api/main.py)
-uvicorn                    # ASGI server to run FastAPI
-pydantic                   # Data validation and settings management
+streamlit              # UI Framework for RAG applications (demo/app.py)
+fastapi                # High-performance web framework for API (api/main.py)
+uvicorn                # ASGI server to run FastAPI
+pydantic               # Data validation and settings management

@@ -90,9 +90,17 @@ class QdrantIndexManager:
             base_dir = Path(__file__).resolve().parent.parent
             default_local_path = base_dir / "data" / "processed" / "qdrant_db"
             default_local_path.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Initializing local embedded Qdrant at: {default_local_path}")
-            self.client = QdrantClient(path=str(default_local_path))
-            self.mode = "local"
+            try:
+                logger.info(f"Initializing local embedded Qdrant at: {default_local_path}")
+                self.client = QdrantClient(path=str(default_local_path))
+                self.mode = "local"
+            except Exception as e:
+                logger.warning(
+                    f"Local embedded Qdrant lock/init failed ({e}). "
+                    "Running in BM25 fallback mode."
+                )
+                self.client = None
+                self.mode = "bm25_fallback"
 
     def init_collection(self, recreate: bool = False) -> None:
         """
@@ -307,6 +315,19 @@ def search_index(
         )
 
     query_filter = models.Filter(must=filter_conditions) if filter_conditions else None
+
+    # If in fallback mode or client unavailable, route directly to BM25
+    if getattr(manager, "client", None) is None or getattr(manager, "mode", "") == "bm25_fallback":
+        from retrieval.hybrid import BM25Index
+
+        bm25 = BM25Index.get_instance()
+        return bm25.search(
+            query=query,
+            top_k=top_k,
+            ticker=ticker,
+            fiscal_year=fiscal_year,
+            section=section,
+        )
 
     # 3. Perform vector search (using modern query_points API)
     try:
