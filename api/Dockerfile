@@ -1,20 +1,27 @@
-# Use an official Python runtime as a parent image
+# FinSight FastAPI Production Container (Task J-6)
 FROM python:3.10-slim
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the requirements file into the container
-COPY requirements.txt .
+# Install system dependencies for building wheels if needed
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-# Install any needed packages specified in requirements.txt
+# Install unified Python dependencies
+COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the current directory contents into the container at /app
-COPY . .
+# Copy application modules and processed corpus/index
+COPY api/ ./api/
+COPY retrieval/ ./retrieval/
+COPY generation/ ./generation/
+COPY data/processed/ ./data/processed/
 
-# Expose port 8000 for the FastAPI application
 EXPOSE 8000
 
-# Run the FastAPI application using uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000"]

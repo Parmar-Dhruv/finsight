@@ -208,3 +208,20 @@ class TestQueryEndpoint:
         assert "retrieval_mode" in pipeline
         assert "generator_backend" in pipeline
         assert pipeline["chunks_retrieved"] <= 2
+
+
+
+# ─── Monitoring Endpoint (Task J-7) ──────────────────────────────────────────
+
+class TestMonitoringEndpoint:
+    def test_metrics_returns_telemetry_snapshot(self, client):
+        # Trigger at least one request first
+        client.get("/health")
+        response = client.get("/metrics")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["total_requests"] >= 1
+        assert "error_rate_pct" in data
+        assert "latency_ms" in data
+        assert "p95" in data["latency_ms"]
+        assert "rag_quality" in data

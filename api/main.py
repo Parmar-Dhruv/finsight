@@ -2,6 +2,7 @@
 ================================================================================
 FinSight — Production API Layer (api/main.py)
 Task J-4: Full Retrieval & Generation Pipeline Integration
+Task J-7: Request Telemetry & Monitoring (/metrics)
 ================================================================================
 
 Replaces the J-1 stub endpoints with real end-to-end calls to:
@@ -11,6 +12,7 @@ Replaces the J-1 stub endpoints with real end-to-end calls to:
 Endpoints:
   - GET  /health   : Health check with subsystem readiness flags.
   - GET  /metadata : Supported companies, fiscal years, sections, and pipeline config.
+  - GET  /metrics  : Live request latency (p50/p95/avg), error rate, and RAG telemetry.
   - POST /retrieve : Dense / Hybrid / Reranked chunk retrieval with metadata filtering.
   - POST /query    : End-to-end RAG question answering with citation tags [SOURCE N].
 """
@@ -19,11 +21,14 @@ from __future__ import annotations
 
 import logging
 import sys
+import threading
 import time
+from collections import deque
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Deque, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, Query, status
+import numpy as np
+from fastapi import FastAPI, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
 
 # Ensure project root is in sys.path
@@ -37,11 +42,99 @@ from generation.inference import FinSightGenerator
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
+
+# ─── J-7: Request Telemetry & Monitoring Tracker ──────────────────────────────
+
+class RequestMonitor:
+    """Thread-safe in-memory telemetry tracker for latency, errors, and RAG metrics."""
+
+    def __init__(self, max_history: int = 500) -> None:
+        self._lock = threading.Lock()
+        self.started_at = time.time()
+        self.total_requests = 0
+        self.total_errors = 0
+        self.latencies_ms: Deque[float] = deque(maxlen=max_history)
+        self.endpoint_counts: Dict[str, int] = {}
+        self.endpoint_errors: Dict[str, int] = {}
+        self.query_citations = 0
+        self.query_refusals = 0
+        self.query_count = 0
+        self.recent_requests: Deque[Dict[str, Any]] = deque(maxlen=50)
+
+    def record_http(self, path: str, method: str, status_code: int, latency_ms: float) -> None:
+        with self._lock:
+            self.total_requests += 1
+            self.latencies_ms.append(latency_ms)
+            self.endpoint_counts[path] = self.endpoint_counts.get(path, 0) + 1
+            if status_code >= 400:
+                self.total_errors += 1
+                self.endpoint_errors[path] = self.endpoint_errors.get(path, 0) + 1
+            self.recent_requests.append({
+                "timestamp": round(time.time(), 2),
+                "method": method,
+                "path": path,
+                "status_code": status_code,
+                "latency_ms": round(latency_ms, 2),
+            })
+
+    def record_query_outcome(self, has_citation: bool, is_refusal: bool) -> None:
+        with self._lock:
+            self.query_count += 1
+            if has_citation:
+                self.query_citations += 1
+            if is_refusal:
+                self.query_refusals += 1
+
+    def snapshot(self) -> Dict[str, Any]:
+        with self._lock:
+            lats = list(self.latencies_ms)
+            err_rate = (self.total_errors / self.total_requests * 100.0) if self.total_requests else 0.0
+            cite_rate = (self.query_citations / self.query_count * 100.0) if self.query_count else 0.0
+            refusal_rate = (self.query_refusals / self.query_count * 100.0) if self.query_count else 0.0
+            return {
+                "uptime_seconds": round(time.time() - self.started_at, 1),
+                "total_requests": self.total_requests,
+                "total_errors": self.total_errors,
+                "error_rate_pct": round(err_rate, 2),
+                "latency_ms": {
+                    "avg": round(float(np.mean(lats)), 2) if lats else 0.0,
+                    "p50": round(float(np.percentile(lats, 50)), 2) if lats else 0.0,
+                    "p95": round(float(np.percentile(lats, 95)), 2) if lats else 0.0,
+                    "max": round(float(np.max(lats)), 2) if lats else 0.0,
+                },
+                "rag_quality": {
+                    "total_queries": self.query_count,
+                    "citation_rate_pct": round(cite_rate, 2),
+                    "refusal_rate_pct": round(refusal_rate, 2),
+                },
+                "endpoint_counts": dict(self.endpoint_counts),
+                "endpoint_errors": dict(self.endpoint_errors),
+                "recent_requests": list(self.recent_requests),
+            }
+
+
+monitor = RequestMonitor()
+
 app = FastAPI(
     title="FinSight Financial RAG API",
     version="1.0.0",
     description="Domain-Adapted RAG Service for SEC 10-K Question Answering",
 )
+
+
+@app.middleware("http")
+async def telemetry_middleware(request: Request, call_next):
+    t0 = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - t0) * 1000.0
+    if request.url.path != "/metrics":
+        monitor.record_http(
+            path=request.url.path,
+            method=request.method,
+            status_code=response.status_code,
+            latency_ms=elapsed_ms,
+        )
+    return response
 
 
 # ─── Pydantic Schemas ─────────────────────────────────────────────────────────
@@ -119,6 +212,12 @@ async def health_check():
         "generator_backend": generator.backend,
         "timestamp": time.time(),
     }
+
+
+@app.get("/metrics", tags=["Monitoring"])
+async def get_metrics():
+    """Returns live request latency, error rate, and RAG citation/refusal telemetry (Task J-7)."""
+    return monitor.snapshot()
 
 
 @app.get("/metadata", tags=["System"])
@@ -244,6 +343,9 @@ async def query_endpoint(request: QueryRequest):
     )
 
     elapsed_ms = (time.perf_counter() - t_start) * 1000.0
+    has_cit = gen_result.get("has_citation", False)
+    is_ref = gen_result.get("is_refusal", False)
+    monitor.record_query_outcome(has_citation=has_cit, is_refusal=is_ref)
 
     sources = [
         SourceAttribution(
@@ -265,8 +367,8 @@ async def query_endpoint(request: QueryRequest):
         answer=gen_result["answer"],
         sources=sources,
         citations=gen_result.get("citations", []),
-        has_citation=gen_result.get("has_citation", False),
-        is_refusal=gen_result.get("is_refusal", False),
+        has_citation=has_cit,
+        is_refusal=is_ref,
         latency_ms=round(elapsed_ms, 2),
         pipeline={
             "retrieval_mode": mode_label,

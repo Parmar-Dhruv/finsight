@@ -1,0 +1,1264 @@
+{
+  "base_llm_no_rag": {
+    "config_id": "base_llm_no_rag",
+    "config_name": "1. Base LLM (No RAG)",
+    "total_questions": 100,
+    "error_counts": {
+      "generation_hallucination_or_ungrounded": 100
+    },
+    "error_percentages": {
+      "generation_hallucination_or_ungrounded": 100.0
+    },
+    "by_company": {
+      "AAPL": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "AMZN": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "GOOGL": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "META": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "MSFT": {
+        "generation_hallucination_or_ungrounded": 20
+      }
+    },
+    "by_question_type": {
+      "numeric_extraction": {
+        "generation_hallucination_or_ungrounded": 49
+      },
+      "numeric_reasoning": {
+        "generation_hallucination_or_ungrounded": 14
+      },
+      "qualitative": {
+        "generation_hallucination_or_ungrounded": 9
+      },
+      "segment_analysis": {
+        "generation_hallucination_or_ungrounded": 9
+      },
+      "tabular": {
+        "generation_hallucination_or_ungrounded": 4
+      },
+      "temporal_comparison": {
+        "generation_hallucination_or_ungrounded": 15
+      }
+    },
+    "sample_failures": {
+      "generation_hallucination_or_ungrounded": [
+        {
+          "id": "AAPL-001",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's total net revenue for fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What was Apple's total net revenue for fiscal year 2024?. Exact figures may vary.",
+          "gold_answer": "Apple's total net revenue for fiscal year 2024 was $391.0 billion."
+        },
+        {
+          "id": "AAPL-002",
+          "ticker": "AAPL",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Apple's gross margin percentage for fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What was Apple's gross margin percentage for fiscal year 2024?. Exact figures may vary.",
+          "gold_answer": "Apple's gross margin for fiscal year 2024 was approximately 46.2%, calculated from gross profit of $180.7 billion on total net revenue of $391.0 billion."
+        },
+        {
+          "id": "AAPL-003",
+          "ticker": "AAPL",
+          "answer_type": "segment_analysis",
+          "query": "How much revenue did Apple generate from its Services segment in fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for How much revenue did Apple generate from its Services segment in fiscal year 2024?. Exact figures may vary.",
+          "gold_answer": "Apple generated $96.2 billion in revenue from its Services segment in fiscal year 2024."
+        },
+        {
+          "id": "AAPL-004",
+          "ticker": "AAPL",
+          "answer_type": "temporal_comparison",
+          "query": "What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?. Exact figures may vary.",
+          "gold_answer": "Apple's revenue grew from $383.3 billion in FY2023 to $391.0 billion in FY2024, a year-over-year growth rate of approximately 2.0%."
+        },
+        {
+          "id": "AAPL-005",
+          "ticker": "AAPL",
+          "answer_type": "qualitative",
+          "query": "What were the primary risk factors Apple identified related to supply chain disruptions in its FY2024 10-K?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What were the primary risk factors Apple identified related to supply chain disruptions in its FY2024 10-K?. Exact figures may",
+          "gold_answer": "Apple identified risks including reliance on single or limited sources for components, geographic concentration of suppliers (primarily in Asia), potential disruptions from natural disasters, geopolitical tensions, healt"
+        }
+      ]
+    }
+  },
+  "naive_rag": {
+    "config_id": "naive_rag",
+    "config_name": "2. Naive RAG",
+    "total_questions": 100,
+    "error_counts": {
+      "numeric_extraction_error": 12,
+      "ranking_error_causing_numeric_miss": 18,
+      "retrieval_miss": 66,
+      "ranking_error": 3,
+      "success": 1
+    },
+    "error_percentages": {
+      "numeric_extraction_error": 12.0,
+      "ranking_error_causing_numeric_miss": 18.0,
+      "retrieval_miss": 66.0,
+      "ranking_error": 3.0,
+      "success": 1.0
+    },
+    "by_company": {
+      "AAPL": {
+        "numeric_extraction_error": 4,
+        "ranking_error_causing_numeric_miss": 4,
+        "retrieval_miss": 11,
+        "ranking_error": 1
+      },
+      "AMZN": {
+        "retrieval_miss": 19,
+        "ranking_error": 1
+      },
+      "GOOGL": {
+        "retrieval_miss": 17,
+        "numeric_extraction_error": 1,
+        "ranking_error_causing_numeric_miss": 2
+      },
+      "META": {
+        "ranking_error_causing_numeric_miss": 3,
+        "retrieval_miss": 16,
+        "success": 1
+      },
+      "MSFT": {
+        "ranking_error_causing_numeric_miss": 9,
+        "numeric_extraction_error": 7,
+        "retrieval_miss": 3,
+        "ranking_error": 1
+      }
+    },
+    "by_question_type": {
+      "numeric_extraction": {
+        "numeric_extraction_error": 7,
+        "retrieval_miss": 32,
+        "ranking_error_causing_numeric_miss": 10
+      },
+      "numeric_reasoning": {
+        "ranking_error_causing_numeric_miss": 6,
+        "retrieval_miss": 6,
+        "numeric_extraction_error": 2
+      },
+      "qualitative": {
+        "retrieval_miss": 5,
+        "ranking_error": 3,
+        "success": 1
+      },
+      "segment_analysis": {
+        "retrieval_miss": 7,
+        "numeric_extraction_error": 1,
+        "ranking_error_causing_numeric_miss": 1
+      },
+      "tabular": {
+        "retrieval_miss": 3,
+        "numeric_extraction_error": 1
+      },
+      "temporal_comparison": {
+        "retrieval_miss": 13,
+        "numeric_extraction_error": 1,
+        "ranking_error_causing_numeric_miss": 1
+      }
+    },
+    "sample_failures": {
+      "numeric_extraction_error": [
+        {
+          "id": "AAPL-001",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's total net revenue for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "| 2024 Form 10-K | 35 The Company\ufffds proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, \ufffdSegment Information and Geographic Data\ufffd for 2024, 2023 and 20",
+          "gold_answer": "Apple's total net revenue for fiscal year 2024 was $391.0 billion."
+        },
+        {
+          "id": "AAPL-006",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's diluted earnings per share (EPS) for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "| Index to Consolidated Financial Statements | Page | | --- | --- | | Consolidated Statements of Operations for the years ended September 28, 2024, September 30, 2023 and September 24, 2022 | 29 | | Consolidated Statemen",
+          "gold_answer": "Apple's diluted earnings per share for fiscal year 2024 was $6.97."
+        },
+        {
+          "id": "AAPL-008",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's total research and development expenditure in FY2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "Research and Development The growth in R&D expense during 2024 compared to 2023 was driven primarily by increases in headcount-related expenses. [SOURCE 1]",
+          "gold_answer": "Apple's research and development expenses for fiscal year 2024 were $31.4 billion."
+        },
+        {
+          "id": "AAPL-015",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's effective tax rate for FY2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "The Company\ufffds effective tax rate for 2024 was higher than the statutory federal income tax rate due primarily to a one-time income tax charge of $10.2 billion, net, related to the State Aid Decision (refer to Note 7, \ufffdIn",
+          "gold_answer": "Apple's effective tax rate for fiscal year 2024 was approximately 16.0%."
+        },
+        {
+          "id": "MSFT-002",
+          "ticker": "MSFT",
+          "answer_type": "segment_analysis",
+          "query": "How much revenue did Microsoft's Intelligent Cloud segment generate in FY2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "MSFT:item_8",
+            "MSFT:unknown",
+            "MSFT:item_8"
+          ],
+          "answer": "We generate revenue by offering a wide range of cloud-based solutions, content, and other services to people and businesses; licensing and supporting an array of software products; delivering relevant online advertising ",
+          "gold_answer": "Microsoft's Intelligent Cloud segment, which includes Azure, SQL Server, Windows Server, GitHub, and Enterprise Services, generated $105.4 billion in revenue in FY2024."
+        }
+      ],
+      "ranking_error_causing_numeric_miss": [
+        {
+          "id": "AAPL-002",
+          "ticker": "AAPL",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Apple's gross margin percentage for fiscal year 2024?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "AAPL:item_1a",
+            "AAPL:item_8",
+            "AAPL:item_1a"
+          ],
+          "answer": "| 2024 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2024, 2023 and 2022 were as follows (dollars in millions):. [SOURCE 1]",
+          "gold_answer": "Apple's gross margin for fiscal year 2024 was approximately 46.2%, calculated from gross profit of $180.7 billion on total net revenue of $391.0 billion."
+        },
+        {
+          "id": "AAPL-011",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "How much did Apple spend on share repurchases during FY2024?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "AAPL:unknown",
+            "AAPL:unknown",
+            "AAPL:item_8"
+          ],
+          "answer": "If the Company fails to meet expectations related to future growth, profitability, dividends, share repurchases or other market expectations, the price of the Company\ufffds stock may decline significantly, which could have a",
+          "gold_answer": "Apple spent approximately $94.9 billion on share repurchases during fiscal year 2024."
+        },
+        {
+          "id": "AAPL-012",
+          "ticker": "AAPL",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Apple's operating income as a percentage of revenue (operating margin) for FY2024?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "AAPL:unknown",
+            "AAPL:item_1a",
+            "AAPL:item_8"
+          ],
+          "answer": "| 2024 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2024, 2023 and 2022 were as follows (dollars in millions):. [SOURCE 2]",
+          "gold_answer": "Apple's operating income was $123.2 billion on $391.0 billion in revenue, yielding an operating margin of approximately 31.5% for FY2024."
+        },
+        {
+          "id": "AAPL-019",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What were Apple's capital expenditures in FY2024 and what were they primarily used for?",
+          "match_rank": 5,
+          "retrieved_top_sections": [
+            "AAPL:unknown",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "( 77,550 ) | | | ( 89,402 ) | | | | Proceeds from issuance of term debt, net | \ufffd | | | 5,228 | | | 5,465 | | | | Repayments of term debt | ( 9,958 ) | | | ( 11,151 ) | | | ( 9,543 ) | | | | Proceeds from/(Repayments of) ",
+          "gold_answer": "Apple's capital expenditures in FY2024 were approximately $9.5 billion, primarily used for product tooling and manufacturing process equipment, corporate facilities and infrastructure, and data center construction."
+        },
+        {
+          "id": "MSFT-001",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "What was Microsoft's total revenue for fiscal year 2024?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "MSFT:unknown",
+            "MSFT:item_8",
+            "MSFT:item_8"
+          ],
+          "answer": "The increase in revenue to the United States for fiscal year 2024 was primarily due to higher U.S.-based Compute & Networking segment demand. [SOURCE 5]",
+          "gold_answer": "Microsoft's total revenue for fiscal year 2024 (ending June 30, 2024) was $245.1 billion."
+        }
+      ],
+      "retrieval_miss": [
+        {
+          "id": "AAPL-003",
+          "ticker": "AAPL",
+          "answer_type": "segment_analysis",
+          "query": "How much revenue did Apple generate from its Services segment in fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:item_1a",
+            "AAPL:unknown"
+          ],
+          "answer": "| 2024 Form 10-K | 35 The Company\ufffds proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, \ufffdSegment Information and Geographic Data\ufffd for 2024, 2023 and 20",
+          "gold_answer": "Apple generated $96.2 billion in revenue from its Services segment in fiscal year 2024."
+        },
+        {
+          "id": "AAPL-004",
+          "ticker": "AAPL",
+          "answer_type": "temporal_comparison",
+          "query": "What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "The Company\ufffds effective tax rate for 2024 was higher than the statutory federal income tax rate due primarily to a one-time income tax charge of $10.2 billion, net, related to the State Aid Decision (refer to Note 7, \ufffdIn",
+          "gold_answer": "Apple's revenue grew from $383.3 billion in FY2023 to $391.0 billion in FY2024, a year-over-year growth rate of approximately 2.0%."
+        },
+        {
+          "id": "AAPL-005",
+          "ticker": "AAPL",
+          "answer_type": "qualitative",
+          "query": "What were the primary risk factors Apple identified related to supply chain disruptions in its FY2024 10-K?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:unknown",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "Restrictions on international trade, such as tariffs and other controls on imports or exports of goods, technology or data, can materially adversely affect the Company\ufffds business and supply chain. [SOURCE 3]",
+          "gold_answer": "Apple identified risks including reliance on single or limited sources for components, geographic concentration of suppliers (primarily in Asia), potential disruptions from natural disasters, geopolitical tensions, healt"
+        },
+        {
+          "id": "AAPL-007",
+          "ticker": "AAPL",
+          "answer_type": "temporal_comparison",
+          "query": "How did Apple's iPhone revenue in FY2024 compare to FY2023?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:unknown",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "iPhone iPhone net sales were relatively flat during 2024 compared to 2023. [SOURCE 2]",
+          "gold_answer": "Apple's iPhone revenue was $201.2 billion in FY2024 compared to $200.6 billion in FY2023, representing a modest increase of approximately 0.3% year-over-year."
+        },
+        {
+          "id": "AAPL-009",
+          "ticker": "AAPL",
+          "answer_type": "tabular",
+          "query": "What percentage of Apple's total revenue came from international markets (outside the Americas) in FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:unknown",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "The Company\ufffds reportable segments consist of the Americas, Europe, Greater China, Japan and Rest of Asia Pacific. [SOURCE 2]",
+          "gold_answer": "International revenue (Europe, Greater China, Japan, and Rest of Asia Pacific combined) accounted for approximately 57% of Apple's total revenue in FY2024."
+        }
+      ],
+      "ranking_error": [
+        {
+          "id": "AAPL-013",
+          "ticker": "AAPL",
+          "answer_type": "qualitative",
+          "query": "What legal proceedings or regulatory risks did Apple disclose in its FY2024 10-K?",
+          "match_rank": 4,
+          "retrieved_top_sections": [
+            "AAPL:item_1a",
+            "AAPL:unknown",
+            "AAPL:unknown"
+          ],
+          "answer": "The Company periodically provides certain information for investors on its corporate website, www.apple.com, and its investor relations website, investor.apple.com. [SOURCE 1]",
+          "gold_answer": "Apple disclosed several legal proceedings including ongoing antitrust litigation in the EU, the Epic Games v. Apple case regarding App Store practices, Department of Justice antitrust action, and various patent infringem"
+        },
+        {
+          "id": "MSFT-005",
+          "ticker": "MSFT",
+          "answer_type": "qualitative",
+          "query": "What AI-related risks did Microsoft disclose in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "MSFT:unknown",
+            "GOOGL:unknown",
+            "MSFT:item_1a"
+          ],
+          "answer": "As with many innovations, AI presents risks and challenges that could affect its adoption, and therefore our business. [SOURCE 1]",
+          "gold_answer": "Microsoft disclosed risks including the rapid development of AI technology creating competitive pressure, ethical and responsible AI concerns, potential regulatory actions related to AI, risks of AI outputs being inaccur"
+        },
+        {
+          "id": "AMZN-005",
+          "ticker": "AMZN",
+          "answer_type": "qualitative",
+          "query": "What fulfillment and logistics risks did Amazon identify in its FY2024 10-K?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "AMZN:unknown",
+            "AMZN:item_1a",
+            "AMZN:item_1a"
+          ],
+          "answer": "Actual results and outcomes could differ materially for a variety of reasons, including, among others, fluctuations in foreign exchange rates, changes in global economic conditions and customer demand and spending, infla",
+          "gold_answer": "Amazon identified risks including dependency on a vast logistics network with seasonal demand spikes, labor market challenges and unionization pressures, inventory management complexity, third-party carrier dependency, r"
+        }
+      ]
+    }
+  },
+  "domain_retrieval_only": {
+    "config_id": "domain_retrieval_only",
+    "config_name": "3. Domain Retrieval Only",
+    "total_questions": 100,
+    "error_counts": {
+      "numeric_extraction_error": 61,
+      "success": 6,
+      "retrieval_miss": 14,
+      "ranking_error_causing_numeric_miss": 14,
+      "ranking_error": 5
+    },
+    "error_percentages": {
+      "numeric_extraction_error": 61.0,
+      "success": 6.0,
+      "retrieval_miss": 14.0,
+      "ranking_error_causing_numeric_miss": 14.0,
+      "ranking_error": 5.0
+    },
+    "by_company": {
+      "AAPL": {
+        "numeric_extraction_error": 16,
+        "success": 1,
+        "retrieval_miss": 3
+      },
+      "AMZN": {
+        "retrieval_miss": 3,
+        "numeric_extraction_error": 12,
+        "ranking_error_causing_numeric_miss": 4,
+        "success": 1
+      },
+      "GOOGL": {
+        "numeric_extraction_error": 14,
+        "ranking_error": 1,
+        "retrieval_miss": 3,
+        "ranking_error_causing_numeric_miss": 1,
+        "success": 1
+      },
+      "META": {
+        "ranking_error_causing_numeric_miss": 3,
+        "numeric_extraction_error": 10,
+        "ranking_error": 3,
+        "success": 2,
+        "retrieval_miss": 2
+      },
+      "MSFT": {
+        "numeric_extraction_error": 9,
+        "ranking_error_causing_numeric_miss": 6,
+        "success": 1,
+        "retrieval_miss": 3,
+        "ranking_error": 1
+      }
+    },
+    "by_question_type": {
+      "numeric_extraction": {
+        "numeric_extraction_error": 30,
+        "retrieval_miss": 9,
+        "ranking_error_causing_numeric_miss": 9,
+        "success": 1
+      },
+      "numeric_reasoning": {
+        "numeric_extraction_error": 11,
+        "ranking_error_causing_numeric_miss": 2,
+        "retrieval_miss": 1
+      },
+      "qualitative": {
+        "success": 4,
+        "retrieval_miss": 1,
+        "ranking_error": 4
+      },
+      "segment_analysis": {
+        "numeric_extraction_error": 9
+      },
+      "tabular": {
+        "numeric_extraction_error": 3,
+        "retrieval_miss": 1
+      },
+      "temporal_comparison": {
+        "numeric_extraction_error": 8,
+        "ranking_error_causing_numeric_miss": 3,
+        "retrieval_miss": 2,
+        "ranking_error": 1,
+        "success": 1
+      }
+    },
+    "sample_failures": {
+      "numeric_extraction_error": [
+        {
+          "id": "AAPL-001",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's total net revenue for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_7"
+          ],
+          "answer": "| 2024 Form 10-K | 35 The Company\ufffds proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, \ufffdSegment Information and Geographic Data\ufffd for 2024, 2023 and 20",
+          "gold_answer": "Apple's total net revenue for fiscal year 2024 was $391.0 billion."
+        },
+        {
+          "id": "AAPL-002",
+          "ticker": "AAPL",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Apple's gross margin percentage for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_7"
+          ],
+          "answer": "| 2024 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2024, 2023 and 2022 were as follows (dollars in millions):. [SOURCE 1]",
+          "gold_answer": "Apple's gross margin for fiscal year 2024 was approximately 46.2%, calculated from gross profit of $180.7 billion on total net revenue of $391.0 billion."
+        },
+        {
+          "id": "AAPL-003",
+          "ticker": "AAPL",
+          "answer_type": "segment_analysis",
+          "query": "How much revenue did Apple generate from its Services segment in fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_8"
+          ],
+          "answer": "| 2024 Form 10-K | 35 The Company\ufffds proportion of net sales by disaggregated revenue source was generally consistent for each reportable segment in Note 13, \ufffdSegment Information and Geographic Data\ufffd for 2024, 2023 and 20",
+          "gold_answer": "Apple generated $96.2 billion in revenue from its Services segment in fiscal year 2024."
+        },
+        {
+          "id": "AAPL-004",
+          "ticker": "AAPL",
+          "answer_type": "temporal_comparison",
+          "query": "What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_7"
+          ],
+          "answer": "Research and Development The growth in R&D expense during 2024 compared to 2023 was driven primarily by increases in headcount-related expenses. [SOURCE 2]",
+          "gold_answer": "Apple's revenue grew from $383.3 billion in FY2023 to $391.0 billion in FY2024, a year-over-year growth rate of approximately 2.0%."
+        },
+        {
+          "id": "AAPL-006",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's diluted earnings per share (EPS) for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "MSFT:item_8",
+            "MSFT:item_8"
+          ],
+          "answer": "| (In millions, except per share amounts) | | | | | | | | | | --- | --- | --- | --- | --- | --- | --- | --- | --- | | Year Ended June 30, | 2024 | | 2023 | | | 2022 | | | | Net income available for common shareholders (A",
+          "gold_answer": "Apple's diluted earnings per share for fiscal year 2024 was $6.97."
+        }
+      ],
+      "retrieval_miss": [
+        {
+          "id": "AAPL-011",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "How much did Apple spend on share repurchases during FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "MSFT:item_8",
+            "MSFT:item_8"
+          ],
+          "answer": "Shares repurchased during the first quarter of fiscal year 2022 were under the share repurchase program approved on September 18, 2019. [SOURCE 3]",
+          "gold_answer": "Apple spent approximately $94.9 billion on share repurchases during fiscal year 2024."
+        },
+        {
+          "id": "AAPL-013",
+          "ticker": "AAPL",
+          "answer_type": "qualitative",
+          "query": "What legal proceedings or regulatory risks did Apple disclose in its FY2024 10-K?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_1a",
+            "AAPL:item_1a",
+            "AAPL:item_1a"
+          ],
+          "answer": "| 2024 Form 10-K | 12 Legal and Regulatory Compliance Risks The Company\ufffds business, results of operations and financial condition could be adversely impacted by unfavorable results of legal proceedings or government inve",
+          "gold_answer": "Apple disclosed several legal proceedings including ongoing antitrust litigation in the EU, the Epic Games v. Apple case regarding App Store practices, Department of Justice antitrust action, and various patent infringem"
+        },
+        {
+          "id": "AAPL-017",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "How many employees did Apple report at the end of FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:item_8",
+            "AAPL:item_8"
+          ],
+          "answer": "| 2024 Form 10-K | 47 Report of Independent Registered Public Accounting Firm To the Shareholders and the Board of Directors of Apple Inc. [SOURCE 2]",
+          "gold_answer": "Apple reported approximately 164,000 full-time equivalent employees as of the end of fiscal year 2024."
+        },
+        {
+          "id": "MSFT-008",
+          "ticker": "MSFT",
+          "answer_type": "tabular",
+          "query": "What were the revenue contributions of each of Microsoft's three operating segments in FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "META:item_8",
+            "META:item_8",
+            "AMZN:item_8"
+          ],
+          "answer": "each operating segment using information about the operating segment's revenue and income (loss) from operations. [SOURCE 2]",
+          "gold_answer": "In FY2024, Productivity and Business Processes generated $80.8 billion, Intelligent Cloud generated $105.4 billion, and More Personal Computing generated $58.9 billion in revenue."
+        },
+        {
+          "id": "MSFT-015",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "What dividends per share did Microsoft declare in FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "MSFT:item_8",
+            "META:item_1a",
+            "META:item_1a"
+          ],
+          "answer": "Our cash dividend program does not require, and our Board of Directors may decide not to declare, a cash dividend each quarter, and does not obligate our Board of Directors to declare a dividend at any specific dollar am",
+          "gold_answer": "Microsoft declared dividends of $3.00 per share during fiscal year 2024."
+        }
+      ],
+      "ranking_error_causing_numeric_miss": [
+        {
+          "id": "MSFT-003",
+          "ticker": "MSFT",
+          "answer_type": "temporal_comparison",
+          "query": "What was Microsoft's year-over-year revenue growth rate from FY2023 to FY2024?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "MSFT:item_7",
+            "MSFT:item_7"
+          ],
+          "answer": "Our Microsoft Cloud revenue, which includes Azure and other cloud services, Office 365 Commercial, the commercial portion of LinkedIn, Dynamics 365, and other commercial cloud properties, was $ 137.4. [SOURCE 4]",
+          "gold_answer": "Microsoft's revenue grew from $211.9 billion in FY2023 to $245.1 billion in FY2024, a year-over-year growth rate of approximately 15.7%."
+        },
+        {
+          "id": "MSFT-004",
+          "ticker": "MSFT",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Microsoft's operating income and operating margin for FY2024?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "MSFT:item_8"
+          ],
+          "answer": "Operating Expenses Operating expenses for 2024, 2023 and 2022 were as follows (dollars in millions):. [SOURCE 1]",
+          "gold_answer": "Microsoft's operating income for FY2024 was $109.4 billion, yielding an operating margin of approximately 44.6% on total revenue of $245.1 billion."
+        },
+        {
+          "id": "MSFT-006",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "What was Microsoft's diluted earnings per share for FY2024?",
+          "match_rank": 4,
+          "retrieved_top_sections": [
+            "META:item_8",
+            "AAPL:item_8",
+            "AAPL:item_8"
+          ],
+          "answer": "| | Year Ended December 31, | | | | | | | | | | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | | | 2024 | | 2023 | | 2022 | | | | | | Revenue | $164,501 | | | $134,902 | | $116,609 | | | | | Costs and expens",
+          "gold_answer": "Microsoft's diluted earnings per share for fiscal year 2024 was $11.80."
+        },
+        {
+          "id": "MSFT-007",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "How much did Microsoft spend on research and development in FY2024?",
+          "match_rank": 4,
+          "retrieved_top_sections": [
+            "MSFT:item_1",
+            "MSFT:item_1",
+            "MSFT:item_1"
+          ],
+          "answer": "Of the total employed people, 86,000 were in operations, including product support and consulting services, datacenter operations, and manufacturing and distribution; 81,000 were in product research and development; 45,0",
+          "gold_answer": "Microsoft's research and development expenses for fiscal year 2024 were $29.5 billion."
+        },
+        {
+          "id": "MSFT-011",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "What was the total acquisition cost of Activision Blizzard as reported in Microsoft's FY2024 10-K?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "MSFT:item_7",
+            "MSFT:item_8",
+            "MSFT:item_8"
+          ],
+          "answer": "billion of debt at face value related to the Activision Blizzard acquisition, the majority of which was exchanged for Microsoft registered securities in June 2024. [SOURCE 4]",
+          "gold_answer": "Microsoft completed the acquisition of Activision Blizzard for approximately $75.4 billion in cash in October 2023, as reported in its FY2024 10-K."
+        }
+      ],
+      "ranking_error": [
+        {
+          "id": "MSFT-014",
+          "ticker": "MSFT",
+          "answer_type": "qualitative",
+          "query": "What competitive risks did Microsoft identify in the cloud computing market in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "MSFT:item_7",
+            "MSFT:item_7",
+            "MSFT:item_1a"
+          ],
+          "answer": "At Microsoft, we push the boundaries of what is possible through a broad range of research and development activities that seek to identify and address the changing demands of customers and users, industry trends, and co",
+          "gold_answer": "Microsoft identified key competitive risks including aggressive competition from AWS (Amazon), Google Cloud, and other cloud providers, price competition, rapid technological change requiring significant ongoing investme"
+        },
+        {
+          "id": "GOOGL-005",
+          "ticker": "GOOGL",
+          "answer_type": "qualitative",
+          "query": "What regulatory and antitrust risks did Alphabet disclose in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "GOOGL:item_1",
+            "GOOGL:item_1",
+            "GOOGL:item_1a"
+          ],
+          "answer": "| Table of Contents | Alphabet Inc. [SOURCE 2]",
+          "gold_answer": "Alphabet disclosed extensive antitrust risks including the DOJ's antitrust case regarding Google's search distribution agreements, the EU's Digital Markets Act compliance requirements, ongoing regulatory scrutiny of adve"
+        },
+        {
+          "id": "META-004",
+          "ticker": "META",
+          "answer_type": "temporal_comparison",
+          "query": "What was Meta's year-over-year revenue growth rate from FY2023 to FY2024?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "META:item_8",
+            "META:item_7"
+          ],
+          "answer": "Total revenue for 2024 was $164.50 billion, an increase of 22% compared to 2023, due to an increase in advertising revenue. [SOURCE 4]",
+          "gold_answer": "Meta's revenue grew from $134.9 billion in FY2023 to $164.5 billion in FY2024, representing a year-over-year growth rate of approximately 21.9%."
+        },
+        {
+          "id": "META-005",
+          "ticker": "META",
+          "answer_type": "qualitative",
+          "query": "What privacy and data regulation risks did Meta disclose in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "META:item_1",
+            "GOOGL:item_1a",
+            "META:item_1a"
+          ],
+          "answer": "and foreign privacy, data use, data combination, data protection, content and content moderation, competition, youth, safety, consumer protection, advertising, and other laws and regulations, including the General Data P",
+          "gold_answer": "Meta disclosed risks including evolving global data protection regulations (GDPR enforcement, US state privacy laws), restrictions on data collection and targeted advertising, regulatory investigations and fines, Apple's"
+        },
+        {
+          "id": "META-020",
+          "ticker": "META",
+          "answer_type": "qualitative",
+          "query": "What competitive threats did Meta identify in social media and messaging in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "META:item_8",
+            "META:item_8",
+            "META:item_1a"
+          ],
+          "answer": "Such investigations, inquiries, and lawsuits concern, among other things, our business practices in the areas of social networking or social media services, digital advertising, and/or mobile or online applications, as w",
+          "gold_answer": "Meta identified competitive threats including TikTok/ByteDance in short-form video, Apple and Google controlling mobile platform distribution, emerging AI-powered competitors, competition for advertiser spend from Google"
+        }
+      ]
+    }
+  },
+  "fine_tuned_no_rag": {
+    "config_id": "fine_tuned_no_rag",
+    "config_name": "4. Fine-Tuned Only (No RAG)",
+    "total_questions": 100,
+    "error_counts": {
+      "generation_hallucination_or_ungrounded": 100
+    },
+    "error_percentages": {
+      "generation_hallucination_or_ungrounded": 100.0
+    },
+    "by_company": {
+      "AAPL": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "AMZN": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "GOOGL": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "META": {
+        "generation_hallucination_or_ungrounded": 20
+      },
+      "MSFT": {
+        "generation_hallucination_or_ungrounded": 20
+      }
+    },
+    "by_question_type": {
+      "numeric_extraction": {
+        "generation_hallucination_or_ungrounded": 49
+      },
+      "numeric_reasoning": {
+        "generation_hallucination_or_ungrounded": 14
+      },
+      "qualitative": {
+        "generation_hallucination_or_ungrounded": 9
+      },
+      "segment_analysis": {
+        "generation_hallucination_or_ungrounded": 9
+      },
+      "tabular": {
+        "generation_hallucination_or_ungrounded": 4
+      },
+      "temporal_comparison": {
+        "generation_hallucination_or_ungrounded": 15
+      }
+    },
+    "sample_failures": {
+      "generation_hallucination_or_ungrounded": [
+        {
+          "id": "AAPL-001",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's total net revenue for fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What was Apple's total net revenue for fiscal year 2024?. Exact figures may vary.",
+          "gold_answer": "Apple's total net revenue for fiscal year 2024 was $391.0 billion."
+        },
+        {
+          "id": "AAPL-002",
+          "ticker": "AAPL",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Apple's gross margin percentage for fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What was Apple's gross margin percentage for fiscal year 2024?. Exact figures may vary.",
+          "gold_answer": "Apple's gross margin for fiscal year 2024 was approximately 46.2%, calculated from gross profit of $180.7 billion on total net revenue of $391.0 billion."
+        },
+        {
+          "id": "AAPL-003",
+          "ticker": "AAPL",
+          "answer_type": "segment_analysis",
+          "query": "How much revenue did Apple generate from its Services segment in fiscal year 2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for How much revenue did Apple generate from its Services segment in fiscal year 2024?. Exact figures may vary.",
+          "gold_answer": "Apple generated $96.2 billion in revenue from its Services segment in fiscal year 2024."
+        },
+        {
+          "id": "AAPL-004",
+          "ticker": "AAPL",
+          "answer_type": "temporal_comparison",
+          "query": "What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?. Exact figures may vary.",
+          "gold_answer": "Apple's revenue grew from $383.3 billion in FY2023 to $391.0 billion in FY2024, a year-over-year growth rate of approximately 2.0%."
+        },
+        {
+          "id": "AAPL-005",
+          "ticker": "AAPL",
+          "answer_type": "qualitative",
+          "query": "What were the primary risk factors Apple identified related to supply chain disruptions in its FY2024 10-K?",
+          "match_rank": null,
+          "retrieved_top_sections": [],
+          "answer": "Based on general knowledge, financial filings for this period contain performance details for What were the primary risk factors Apple identified related to supply chain disruptions in its FY2024 10-K?. Exact figures may",
+          "gold_answer": "Apple identified risks including reliance on single or limited sources for components, geographic concentration of suppliers (primarily in Asia), potential disruptions from natural disasters, geopolitical tensions, healt"
+        }
+      ]
+    }
+  },
+  "full_finsight_system": {
+    "config_id": "full_finsight_system",
+    "config_name": "5. Full FinSight System",
+    "total_questions": 100,
+    "error_counts": {
+      "numeric_extraction_error": 73,
+      "success": 9,
+      "retrieval_miss": 6,
+      "ranking_error_causing_numeric_miss": 9,
+      "ranking_error": 3
+    },
+    "error_percentages": {
+      "numeric_extraction_error": 73.0,
+      "success": 9.0,
+      "retrieval_miss": 6.0,
+      "ranking_error_causing_numeric_miss": 9.0,
+      "ranking_error": 3.0
+    },
+    "by_company": {
+      "AAPL": {
+        "numeric_extraction_error": 17,
+        "success": 1,
+        "retrieval_miss": 2
+      },
+      "AMZN": {
+        "numeric_extraction_error": 16,
+        "ranking_error_causing_numeric_miss": 3,
+        "success": 1
+      },
+      "GOOGL": {
+        "numeric_extraction_error": 14,
+        "success": 2,
+        "ranking_error": 1,
+        "retrieval_miss": 2,
+        "ranking_error_causing_numeric_miss": 1
+      },
+      "META": {
+        "numeric_extraction_error": 13,
+        "ranking_error": 1,
+        "success": 3,
+        "ranking_error_causing_numeric_miss": 2,
+        "retrieval_miss": 1
+      },
+      "MSFT": {
+        "numeric_extraction_error": 13,
+        "success": 2,
+        "ranking_error_causing_numeric_miss": 3,
+        "ranking_error": 1,
+        "retrieval_miss": 1
+      }
+    },
+    "by_question_type": {
+      "numeric_extraction": {
+        "numeric_extraction_error": 37,
+        "retrieval_miss": 3,
+        "success": 3,
+        "ranking_error_causing_numeric_miss": 6
+      },
+      "numeric_reasoning": {
+        "numeric_extraction_error": 14
+      },
+      "qualitative": {
+        "success": 5,
+        "retrieval_miss": 2,
+        "ranking_error": 2
+      },
+      "segment_analysis": {
+        "numeric_extraction_error": 9
+      },
+      "tabular": {
+        "numeric_extraction_error": 4
+      },
+      "temporal_comparison": {
+        "numeric_extraction_error": 9,
+        "ranking_error_causing_numeric_miss": 3,
+        "retrieval_miss": 1,
+        "ranking_error": 1,
+        "success": 1
+      }
+    },
+    "sample_failures": {
+      "numeric_extraction_error": [
+        {
+          "id": "AAPL-001",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's total net revenue for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_8",
+            "AAPL:item_7"
+          ],
+          "answer": "| 2024 Form 10-K | 29 Apple Inc. [SOURCE 2]",
+          "gold_answer": "Apple's total net revenue for fiscal year 2024 was $391.0 billion."
+        },
+        {
+          "id": "AAPL-002",
+          "ticker": "AAPL",
+          "answer_type": "numeric_reasoning",
+          "query": "What was Apple's gross margin percentage for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_7"
+          ],
+          "answer": "| 2024 Form 10-K | 23 Gross Margin Products and Services gross margin and gross margin percentage for 2024, 2023 and 2022 were as follows (dollars in millions):. [SOURCE 1]",
+          "gold_answer": "Apple's gross margin for fiscal year 2024 was approximately 46.2%, calculated from gross profit of $180.7 billion on total net revenue of $391.0 billion."
+        },
+        {
+          "id": "AAPL-003",
+          "ticker": "AAPL",
+          "answer_type": "segment_analysis",
+          "query": "How much revenue did Apple generate from its Services segment in fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_8"
+          ],
+          "answer": "| 2024 Form 10-K | 22 Products and Services Performance The following table shows net sales by category for 2024, 2023 and 2022 (dollars in millions):. [SOURCE 2]",
+          "gold_answer": "Apple generated $96.2 billion in revenue from its Services segment in fiscal year 2024."
+        },
+        {
+          "id": "AAPL-004",
+          "ticker": "AAPL",
+          "answer_type": "temporal_comparison",
+          "query": "What was the year-over-year revenue growth rate for Apple from FY2023 to FY2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AAPL:item_7",
+            "AAPL:item_7"
+          ],
+          "answer": "Research and Development The growth in R&D expense during 2024 compared to 2023 was driven primarily by increases in headcount-related expenses. [SOURCE 2]",
+          "gold_answer": "Apple's revenue grew from $383.3 billion in FY2023 to $391.0 billion in FY2024, a year-over-year growth rate of approximately 2.0%."
+        },
+        {
+          "id": "AAPL-006",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "What was Apple's diluted earnings per share (EPS) for fiscal year 2024?",
+          "match_rank": 1,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:item_8",
+            "AAPL:item_8"
+          ],
+          "answer": "Note 3 \ufffd Earnings Per Share The following table shows the computation of basic and diluted earnings per share for 2024, 2023 and 2022 (net income in millions and shares in thousands):. [SOURCE 1]",
+          "gold_answer": "Apple's diluted earnings per share for fiscal year 2024 was $6.97."
+        }
+      ],
+      "retrieval_miss": [
+        {
+          "id": "AAPL-013",
+          "ticker": "AAPL",
+          "answer_type": "qualitative",
+          "query": "What legal proceedings or regulatory risks did Apple disclose in its FY2024 10-K?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_1a",
+            "AAPL:item_1a",
+            "AAPL:item_1a"
+          ],
+          "answer": "| 2024 Form 10-K | 12 Legal and Regulatory Compliance Risks The Company\ufffds business, results of operations and financial condition could be adversely impacted by unfavorable results of legal proceedings or government inve",
+          "gold_answer": "Apple disclosed several legal proceedings including ongoing antitrust litigation in the EU, the Epic Games v. Apple case regarding App Store practices, Department of Justice antitrust action, and various patent infringem"
+        },
+        {
+          "id": "AAPL-017",
+          "ticker": "AAPL",
+          "answer_type": "numeric_extraction",
+          "query": "How many employees did Apple report at the end of FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "AAPL:item_8",
+            "AAPL:item_8",
+            "AAPL:item_8"
+          ],
+          "answer": "| 2024 Form 10-K | 47 Report of Independent Registered Public Accounting Firm To the Shareholders and the Board of Directors of Apple Inc. [SOURCE 2]",
+          "gold_answer": "Apple reported approximately 164,000 full-time equivalent employees as of the end of fiscal year 2024."
+        },
+        {
+          "id": "MSFT-015",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "What dividends per share did Microsoft declare in FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "MSFT:item_8",
+            "MSFT:item_8",
+            "MSFT:item_8"
+          ],
+          "answer": "Our Board of Directors declared the following dividends:. [SOURCE 1]",
+          "gold_answer": "Microsoft declared dividends of $3.00 per share during fiscal year 2024."
+        },
+        {
+          "id": "GOOGL-014",
+          "ticker": "GOOGL",
+          "answer_type": "numeric_extraction",
+          "query": "How many employees did Alphabet report at the end of FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "GOOGL:item_8",
+            "GOOGL:item_1a",
+            "GOOGL:item_1a"
+          ],
+          "answer": "Supporting healthy and open dialogue is central to how we work, and we communicate information about the company through multiple internal channels to our employees. [SOURCE 2]",
+          "gold_answer": "Alphabet reported approximately 183,000 employees as of the end of fiscal year 2024."
+        },
+        {
+          "id": "GOOGL-020",
+          "ticker": "GOOGL",
+          "answer_type": "temporal_comparison",
+          "query": "What was Alphabet's total revenue growth rate from FY2023 to FY2024?",
+          "match_rank": null,
+          "retrieved_top_sections": [
+            "GOOGL:item_8",
+            "GOOGL:item_8",
+            "GOOGL:item_8"
+          ],
+          "answer": "The reconciliation of federal statutory income tax rate to our effective income tax rate was as follows:. [SOURCE 5]",
+          "gold_answer": "Alphabet's total revenue grew from $307.4 billion in FY2023 to $350.0 billion in FY2024, representing year-over-year growth of approximately 13.9%."
+        }
+      ],
+      "ranking_error_causing_numeric_miss": [
+        {
+          "id": "MSFT-007",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "How much did Microsoft spend on research and development in FY2024?",
+          "match_rank": 4,
+          "retrieved_top_sections": [
+            "MSFT:item_1",
+            "MSFT:item_1",
+            "MSFT:item_1"
+          ],
+          "answer": "RESEARCH AND DEVELOPMENT. [SOURCE 5]",
+          "gold_answer": "Microsoft's research and development expenses for fiscal year 2024 were $29.5 billion."
+        },
+        {
+          "id": "MSFT-011",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "What was the total acquisition cost of Activision Blizzard as reported in Microsoft's FY2024 10-K?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "MSFT:item_7",
+            "MSFT:item_8",
+            "MSFT:item_8"
+          ],
+          "answer": "billion of debt at face value related to the Activision Blizzard acquisition, the majority of which was exchanged for Microsoft registered securities in June 2024. [SOURCE 4]",
+          "gold_answer": "Microsoft completed the acquisition of Activision Blizzard for approximately $75.4 billion in cash in October 2023, as reported in its FY2024 10-K."
+        },
+        {
+          "id": "MSFT-017",
+          "ticker": "MSFT",
+          "answer_type": "numeric_extraction",
+          "query": "How many employees did Microsoft report at the end of FY2024?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "MSFT:item_8",
+            "MSFT:item_8",
+            "MSFT:item_1"
+          ],
+          "answer": "We have audited the accompanying consolidated balance sheets of Microsoft Corporation and subsidiaries (the \"Company\") as of June 30, 2024 and 2023, the related consolidated statements of income, comprehensive income, ca",
+          "gold_answer": "Microsoft reported approximately 228,000 employees worldwide as of the end of fiscal year 2024."
+        },
+        {
+          "id": "GOOGL-015",
+          "ticker": "GOOGL",
+          "answer_type": "temporal_comparison",
+          "query": "What was the growth rate of YouTube advertising revenue from FY2023 to FY2024?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "META:item_7",
+            "GOOGL:item_8",
+            "META:item_7"
+          ],
+          "answer": "These trends adversely affected advertising revenue in 2024, and we expect will continue to affect our advertising revenue in the foreseeable future. [SOURCE 1]",
+          "gold_answer": "YouTube advertising revenue grew from $31.5 billion in FY2023 to approximately $36.1 billion in FY2024, representing a growth rate of approximately 14.6%."
+        },
+        {
+          "id": "AMZN-003",
+          "ticker": "AMZN",
+          "answer_type": "temporal_comparison",
+          "query": "What was AWS's year-over-year revenue growth rate from FY2023 to FY2024?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "AAPL:item_7",
+            "AMZN:item_8",
+            "AMZN:item_8"
+          ],
+          "answer": "Revenue from such arrangements is recognized over the subscription period. [SOURCE 5]",
+          "gold_answer": "AWS revenue grew from $90.8 billion in FY2023 to $107.6 billion in FY2024, representing a year-over-year growth rate of approximately 18.5%."
+        }
+      ],
+      "ranking_error": [
+        {
+          "id": "MSFT-014",
+          "ticker": "MSFT",
+          "answer_type": "qualitative",
+          "query": "What competitive risks did Microsoft identify in the cloud computing market in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "MSFT:item_7",
+            "MSFT:item_7",
+            "MSFT:item_1a"
+          ],
+          "answer": "At Microsoft, we push the boundaries of what is possible through a broad range of research and development activities that seek to identify and address the changing demands of customers and users, industry trends, and co",
+          "gold_answer": "Microsoft identified key competitive risks including aggressive competition from AWS (Amazon), Google Cloud, and other cloud providers, price competition, rapid technological change requiring significant ongoing investme"
+        },
+        {
+          "id": "GOOGL-005",
+          "ticker": "GOOGL",
+          "answer_type": "qualitative",
+          "query": "What regulatory and antitrust risks did Alphabet disclose in its FY2024 10-K?",
+          "match_rank": 3,
+          "retrieved_top_sections": [
+            "GOOGL:item_1",
+            "GOOGL:item_1",
+            "GOOGL:item_1a"
+          ],
+          "answer": "| Table of Contents | Alphabet Inc. [SOURCE 2]",
+          "gold_answer": "Alphabet disclosed extensive antitrust risks including the DOJ's antitrust case regarding Google's search distribution agreements, the EU's Digital Markets Act compliance requirements, ongoing regulatory scrutiny of adve"
+        },
+        {
+          "id": "META-004",
+          "ticker": "META",
+          "answer_type": "temporal_comparison",
+          "query": "What was Meta's year-over-year revenue growth rate from FY2023 to FY2024?",
+          "match_rank": 2,
+          "retrieved_top_sections": [
+            "META:item_8",
+            "META:item_7",
+            "META:item_7"
+          ],
+          "answer": "Total revenue for 2024 was $164.50 billion, an increase of 22% compared to 2023, due to an increase in advertising revenue. [SOURCE 3]",
+          "gold_answer": "Meta's revenue grew from $134.9 billion in FY2023 to $164.5 billion in FY2024, representing a year-over-year growth rate of approximately 21.9%."
+        }
+      ]
+    }
+  }
+}

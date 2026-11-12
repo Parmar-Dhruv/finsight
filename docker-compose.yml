@@ -3,16 +3,18 @@ version: '3.8'
 services:
   api:
     build:
-      context: ./api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: api/Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./api:/app
+      - .:/app
     environment:
-      - ENVIRONMENT=development
+      - ENVIRONMENT=production
+      - PYTHONPATH=/app
     depends_on:
       - mlflow
+    restart: unless-stopped
 
   # ─── J-3: MLflow Experiment Tracking UI ──────────────────────────────────────
   # Self-hosted, free, no external service required.

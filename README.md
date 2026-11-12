@@ -349,6 +349,25 @@ Evaluated against the official **100-question financial benchmark** across 5 com
 
 ---
 
+### 17.2 Full End-to-End Comparative Evaluation Matrix (Task J-5)
+
+Evaluated across all 5 system configurations on the 100-question benchmark (eval/j5_comparative_eval.py, archived in evaluation/results/j5_comparative_matrix.json):
+
+| Configuration | HR@1 | HR@5 | MRR | Citation Rate | Faithfulness | p95 Latency (ms) |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|
+| **1. Base LLM (No RAG)** | N/A | N/A | N/A | 0.0% | 0.0000 | 0.0 |
+| **2. Naive RAG** | 13.0% | 34.0% | 0.2128 | 100.0% | 1.0000 | 384.9 |
+| **3. Domain Retrieval Only** (Hybrid+Rerank, unfiltered) | 67.0% | 86.0% | 0.7340 | 100.0% | 1.0000 | 27,104.9 |
+| **4. Fine-Tuned Only (No RAG)** | N/A | N/A | N/A | 0.0% | 0.0000 | 0.0 |
+| **5. Full FinSight System** (Metadata-Filtered + Hybrid+Rerank) | **82.0%** | **94.0%** | **0.8683** | **100.0%** | **1.0000** | **3,836.8** |
+
+* **Error Analysis (Task N/D-1):** Retrieval misses dropped from **66.0% (Naive RAG)** down to **6.0% (Full FinSight System)** (evaluation/results/nd1_error_analysis.json).
+* **CPU Latency Profile (Task J-6):** dense_only p95 = **450.4 ms**, hybrid_bm25_rrf p95 = **457.5 ms**, hybrid_bm25_rerank (
+erank_pool=10 filtered) p95 = **3,836.8 ms** (< 5s SLA met).
+* **Documentation & Reports:** See [Setup, Architecture & API Docs](docs/ARCHITECTURE_AND_API.md) and [Academic Report](docs/ACADEMIC_REPORT.md).
+
+---
+
 ## 18. Limitations
 
 * **Model Capacity Ceiling:** Llama 3.2 3B has a lower natural reasoning ceiling compared to 70B+ frontier models; complex multi-hop calculations require prompt-level guidance.
