@@ -179,16 +179,20 @@ def _badge_html(answer: str) -> str:
 
 def _format_source_excerpt(text: str) -> str:
     """Clean raw SEC text and pipe-delimited table artifacts for human display."""
-    t = text.replace("\ufffd", "'").replace("", "'")
+    if not text:
+        return ""
+    t = text.replace("\ufffd", "'")
+    t = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", t)
+    t = t.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     lines = []
     for line in t.splitlines():
         line = line.strip()
         if not line or set(line).issubset({"|", "-", " ", ":"}):
             continue
         if line.startswith("|"):
-            cells = [c.strip() for c in line.split("|") if c.strip()]
+            cells = [c.strip() for c in line.split("|") if c.strip() and not set(c.strip()).issubset({"-", ":"})]
             if cells:
-                lines.append("  ·  ".join(cells))
+                lines.append(" · ".join(cells))
         else:
             lines.append(line)
     cleaned = "\n".join(lines)

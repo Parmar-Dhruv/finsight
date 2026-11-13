@@ -339,7 +339,8 @@ class FinSightGenerator:
         year_str = f"fiscal year {target_year}" if target_year else "the reported fiscal period"
 
         def _clean_text(t: str) -> str:
-            t = t.replace("\ufffd", "'").replace("", "'")
+            t = t.replace("\ufffd", "'")
+            t = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", t)
             t = t.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
             return re.sub(r"[ \t]+", " ", t).strip()
 
