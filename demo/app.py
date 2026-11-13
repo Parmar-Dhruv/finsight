@@ -54,6 +54,16 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    /* ---- Hide Streamlit Deploy button, hamburger menu & footer ---- */
+    [data-testid="stAppDeployButton"],
+    [data-testid="stToolbarActions"],
+    .stDeployButton,
+    #MainMenu,
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
     /* ---- Global ---- */
     .block-container { max-width: 860px; padding-top: 1.5rem; }
 

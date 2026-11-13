@@ -221,3 +221,4 @@ class AuthChatStore:
             down = conn.execute("SELECT COUNT(*) FROM chat_messages WHERE feedback = 'down'").fetchone()[0]
             total_msgs = conn.execute("SELECT COUNT(*) FROM chat_messages WHERE role = 'assistant'").fetchone()[0]
         return {"thumbs_up": int(up), "thumbs_down": int(down), "total_assistant_messages": int(total_msgs)}
+

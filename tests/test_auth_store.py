@@ -55,3 +55,4 @@ def test_register_and_chat_persistence(tmp_path):
 
     store.delete_session(user["id"], sid)
     assert store.list_sessions(user["id"]) == []
+
