@@ -120,9 +120,6 @@ st.markdown(
     [data-testid="stSidebar"] .stButton > button {
         text-align: left;
     }
-
-    /* ---- Feedback row ---- */
-    .fb-row button { padding: 0.15rem 0.5rem; font-size: 0.82em; }
     </style>
     """,
     unsafe_allow_html=True,
@@ -371,24 +368,6 @@ def _render_chat(store: AuthChatStore, user: Dict[str, Any], session_id: int) ->
                 else:
                     st.markdown(_badge_html(msg["content"]), unsafe_allow_html=True)
                     _render_sources(msg.get("sources", []))
-
-                # Feedback buttons
-                fb = msg.get("feedback")
-                c1, c2, _ = st.columns([0.5, 0.5, 11])
-                with c1:
-                    if st.button(
-                        "👍" if fb != "up" else "👍 ✓",
-                        key=f"up_{msg['id']}",
-                    ):
-                        store.set_feedback(msg["id"], "up")
-                        st.rerun()
-                with c2:
-                    if st.button(
-                        "👎" if fb != "down" else "👎 ✓",
-                        key=f"dn_{msg['id']}",
-                    ):
-                        store.set_feedback(msg["id"], "down")
-                        st.rerun()
             else:
                 st.markdown(msg["content"])
 
