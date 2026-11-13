@@ -162,7 +162,7 @@ def _auto_detect(query: str) -> Tuple[Optional[str], Optional[int]]:
         if re.search(pat, q):
             ticker = code
             break
-    years = set(re.findall(r"\b(2023|2024)\b", q))
+    years = set(re.findall(r"(?:fy|fiscal\s*)?(202[234])\b", q))
     year = int(next(iter(years))) if len(years) == 1 else None
     return ticker, year
 
@@ -177,6 +177,25 @@ def _badge_html(answer: str) -> str:
     )
 
 
+def _format_source_excerpt(text: str) -> str:
+    """Clean raw SEC text and pipe-delimited table artifacts for human display."""
+    t = text.replace("\ufffd", "'").replace("", "'")
+    lines = []
+    for line in t.splitlines():
+        line = line.strip()
+        if not line or set(line).issubset({"|", "-", " ", ":"}):
+            continue
+        if line.startswith("|"):
+            cells = [c.strip() for c in line.split("|") if c.strip()]
+            if cells:
+                lines.append("  ·  ".join(cells))
+        else:
+            lines.append(line)
+    cleaned = "\n".join(lines)
+    cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+    return cleaned[:500] + ("…" if len(cleaned) > 500 else "")
+
+
 def _render_sources(sources: List[Dict[str, Any]]) -> None:
     """Render a clean collapsible sources section (no scores / chunk IDs)."""
     if not sources:
@@ -186,11 +205,11 @@ def _render_sources(sources: List[Dict[str, Any]]) -> None:
             ticker = ch.get("ticker", "")
             fy = ch.get("fiscal_year", "")
             section = str(ch.get("section", "")).replace("_", " ").title()
-            text = ch.get("text", "")
+            text = _format_source_excerpt(ch.get("text", "") or ch.get("excerpt", ""))
             st.markdown(
                 f'<div class="source-card">'
                 f'<div class="src-heading">[SOURCE {idx}]  {ticker} · FY{fy} · {section}</div>'
-                f'<div class="src-text">{text[:600]}{"…" if len(text) > 600 else ""}</div>'
+                f'<div class="src-text">{text}</div>'
                 f"</div>",
                 unsafe_allow_html=True,
             )
